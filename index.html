@@ -24,7 +24,8 @@
     <div id="root"></div>
     <script type="text/babel">
         const API_URL = 'https://distriapi.onzacore.site/api';
-
+        // --- Componentes de Iconos (Ultimo añadido) ---
+        const HistoryIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>);
         // --- Componentes de Iconos (Sin cambios) ---
         const HomeIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>);
         const PackageIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16.5 9.4a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/><path d="M19 13.3a9 9 0 1 1-14 0"/><path d="M12 17.5a2.5 2.5 0 0 1-2.5-2.5V9.4h5v5.6a2.5 2.5 0 0 1-2.5 2.5Z"/></svg>);
@@ -360,32 +361,68 @@
             const [editableItems, setEditableItems] = React.useState([]);
             const [allProducts, setAllProducts] = React.useState([]);
             const [productSearch, setProductSearch] = React.useState('');
+            const [logs, setLogs] = React.useState([]);
+            const [showLogs, setShowLogs] = React.useState(false);
             const token = localStorage.getItem('token');
-            const fetchPedido = React.useCallback(async () => {
-                setLoading(true);
-                try {
-                    const response = await fetch(`${API_URL}/pedidos/${pedidoId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (!response.ok) throw new Error('No se pudo obtener el detalle del pedido.');
-                    const data = await response.json();
-                    setPedido(data);
-                    setEditableItems(data.items.map(item => ({ ...item, producto_id: item.producto_id })));
-                } catch (err) { setError(err.message); } finally { setLoading(false); }
-            }, [pedidoId, token]);
-            React.useEffect(() => { fetchPedido(); }, [fetchPedido]);
+            
+            // Chequeo de integridad
+            const [integrityIssues, setIntegrityIssues] = React.useState([]);
+
             React.useEffect(() => {
-                if (isEditing) {
-                    const fetchAllProducts = async () => {
-                        const response = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        setAllProducts(await response.json());
-                    };
-                    fetchAllProducts();
+                const fetchAllData = async () => {
+                    setLoading(true);
+                    try {
+                        // 1. Fetch del pedido
+                        const pedidoRes = await fetch(`${API_URL}/pedidos/${pedidoId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (!pedidoRes.ok) throw new Error('No se pudo obtener el detalle del pedido.');
+                        const pedidoData = await pedidoRes.json();
+                        setPedido(pedidoData);
+                        setEditableItems(pedidoData.items);
+
+                        // 2. Fetch de todos los productos para la comparación
+                        const productsRes = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (!productsRes.ok) throw new Error('No se pudo obtener la lista de productos.');
+                        const allProductsData = await productsRes.json();
+                        setAllProducts(allProductsData);
+
+                        // 3. Chequeo de integridad
+                        const issues = [];
+                        const productIds = allProductsData.map(p => p.id);
+                        pedidoData.items.forEach(item => {
+                            if (!productIds.includes(item.producto_id)) {
+                                issues.push(`El producto "${item.nombre_producto}" (ID: ${item.producto_id}) de este pedido ya no existe en la base de datos.`);
+                            }
+                        });
+                        setIntegrityIssues(issues);
+
+                    } catch (err) {
+                        setError(err.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                fetchAllData();
+            }, [pedidoId, token]);
+
+            const fetchLogs = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const allLogs = await response.json();
+                    // Filtrar logs específicos para este pedido
+                    const filtered = allLogs.filter(log => log.detalle && log.detalle.includes(`#${pedidoId}`));
+                    setLogs(filtered);
+                    setShowLogs(true);
+                } catch (err) {
+                    alert("Error al cargar los logs.");
                 }
-            }, [isEditing, token]);
+            };
+            
+            // ... (resto de funciones sin cambios: handleUpdateStatus, handleQuantityChange, handleRemoveItem, handleAddItem, handleSaveChanges, handlePrint) ...
             const handleUpdateStatus = async (nuevoEstado) => {
                 try {
                     const response = await fetch(`${API_URL}/pedidos/${pedidoId}/estado`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ estado: nuevoEstado }) });
                     if (!response.ok) throw new Error('Error al actualizar estado.');
-                    fetchPedido(); onUpdate();
+                    onClose(); onUpdate();
                 } catch(err) { alert(err.message); }
             };
             const handleQuantityChange = (itemId, newQuantity) => {
@@ -395,7 +432,7 @@
             const handleRemoveItem = (itemId) => { setEditableItems(items => items.filter(item => (item.id !== itemId && item.producto_id !== itemId))); };
             const handleAddItem = (productToAdd) => {
                 if (productToAdd && !editableItems.find(item => item.producto_id == productToAdd.id)) {
-                    const newItem = { id: `new_${productToAdd.id}`, producto_id: productToAdd.id, nombre_producto: productToAdd.nombre, cantidad: 1, precio_congelado: productToAdd.precio_unitario, aviso_faltante: productToAdd.stock === 'No' };
+                    const newItem = { id: `new_${productToAdd.id}`, producto_id: productToAdd.id, nombre_producto: productToAdd.nombre, cantidad: 1, precio_congelado: productToAdd.precio_unitario, aviso_faltante: productToAdd.stock === 'No', codigo_sku: productToAdd.codigo_sku };
                     setEditableItems(items => [...items, newItem]);
                 }
                 setProductSearch('');
@@ -405,26 +442,29 @@
                 try {
                     const response = await fetch(`${API_URL}/pedidos/${pedidoId}/items`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ items: itemsToSave }) });
                     if (!response.ok) throw new Error('Error al guardar los cambios.');
-                    setIsEditing(false); fetchPedido(); onUpdate();
+                    setIsEditing(false); onClose(); onUpdate();
                 } catch (err) { alert(err.message); }
             };
             const handlePrint = () => { window.print(); };
+
             const totalPedido = (pedido && editableItems) ? editableItems.reduce((acc, item) => acc + (item.cantidad * item.precio_congelado), 0) : 0;
             const isAdmin = user.rol === 'admin';
             const isDeposito = user.rol === 'deposito';
             const estadosAdmin = { pendiente: 'Pendiente', visto: 'Visto', en_preparacion: 'En Preparación', facturado: 'Facturado', listo_para_entrega: 'Listo p/ Entrega', entregado: 'Entregado', cancelado: 'Cancelado' };
-            const estadosDeposito = { en_preparacion: 'En Preparación', listo_para_entrega: 'Listo p/ Entrega', entregado: 'Entregado' };
-            const filteredProductsToAdd = allProducts.filter(p => 
-                p.nombre.toLowerCase().includes(productSearch.toLowerCase()) && 
-                !editableItems.some(item => item.producto_id === p.id)
-            ).slice(0, 5);
+            const estadosDeposito = { pendiente: 'Pendiente', visto: 'Visto', en_preparacion: 'En Preparación', listo_para_entrega: 'Listo p/ Entrega', entregado: 'Entregado' };
+            const filteredProductsToAdd = allProducts.filter(p => productSearch && p.nombre.toLowerCase().includes(productSearch.toLowerCase()) && !editableItems.some(item => item.producto_id === p.id)).slice(0, 5);
+            
             return (
                 <React.Fragment>
                     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
                             <div className="flex justify-between items-center p-4 border-b">
                                 <h2 className="text-xl font-bold text-gray-800">Detalle del Pedido #{pedidoId}</h2>
                                 <div className="flex items-center gap-4">
+                                    <button onClick={fetchLogs} className="relative flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
+                                        <HistoryIcon className="h-5 w-5"/>Logs
+                                        {integrityIssues.length > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 border-2 border-white"></span>}
+                                    </button>
                                     <button onClick={handlePrint} className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg"><PrintIcon className="h-5 w-5"/>Imprimir</button>
                                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button>
                                 </div>
@@ -433,6 +473,28 @@
                             {error && <p className="p-8 text-red-500">{error}</p>}
                             {pedido && (
                                 <div className="p-6 overflow-y-auto">
+                                    {/* Componente de Logs y Alertas */}
+                                    {showLogs && (
+                                        <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="font-bold text-gray-800">Historial de Cambios</h3>
+                                                <button onClick={() => setShowLogs(false)} className="text-gray-500 hover:text-gray-700"><CloseIcon className="h-4 w-4"/></button>
+                                            </div>
+                                            {integrityIssues.length > 0 && (
+                                                <div className="mb-2 p-2 bg-red-100 text-red-700 text-sm rounded-md">
+                                                    <h4 className="font-bold">¡Alerta de Integridad!</h4>
+                                                    <ul className="list-disc list-inside">{integrityIssues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
+                                                </div>
+                                            )}
+                                            {logs.length > 0 ? (
+                                                <ul className="text-xs space-y-2 max-h-40 overflow-y-auto">
+                                                    {logs.map(log => <li key={log.id} className="p-2 bg-white rounded"><p className="whitespace-pre-wrap">{log.detalle}</p><p className="text-gray-400 text-right">{new Date(log.fecha_creacion).toLocaleString()}</p></li>)}
+                                                </ul>
+                                            ) : <p className="text-sm text-gray-500">No hay registros de modificación para este pedido.</p>}
+                                        </div>
+                                    )}
+                                    {/* Fin de Logs */}
+
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         <div><h3 className="font-bold text-gray-800 mb-2">Cliente</h3><p className="text-gray-600">{pedido.nombre_comercio}</p><p className="text-gray-500 text-sm">{pedido.direccion}</p></div>
                                         <div><h3 className="font-bold text-gray-800 mb-2">Información del Pedido</h3><p className="text-gray-600">Vendedor: <span className="font-semibold">{pedido.nombre_vendedor}</span></p><p className="text-gray-600">Fecha: <span className="font-semibold">{new Date(pedido.fecha_creacion).toLocaleString()}</span></p><p className="text-gray-600 flex items-center">Estado actual: <span className="ml-2"><EstadoBadge estado={pedido.estado}/></span></p></div>
@@ -443,7 +505,11 @@
                                     </div>
                                     <div className="border rounded-lg overflow-hidden mb-4">
                                         <table className="min-w-full"><thead className="bg-gray-50 text-xs uppercase"><tr><th className="px-4 py-2 text-left">Producto</th><th className="px-4 py-2 text-center">Cantidad</th><th className="px-4 py-2 text-right">Subtotal</th>{isEditing && <th className="px-4 py-2 text-right"></th>}</tr></thead>
-                                            <tbody className="divide-y">{editableItems.map(item => (<tr key={item.id || item.producto_id}><td className="px-4 py-2 text-sm flex items-center">{item.aviso_faltante && <WarningIcon className="h-4 w-4 text-yellow-500 mr-2" title="Este producto no tenía stock al momento del pedido"/>}{item.nombre_producto}</td>
+                                            <tbody className="divide-y">{editableItems.map(item => (<tr key={item.id || item.producto_id} className={integrityIssues.some(i => i.includes(`ID: ${item.producto_id}`)) ? 'bg-red-50' : ''}>
+                                                <td className="px-4 py-2 text-sm flex items-center">
+                                                    {item.aviso_faltante && <WarningIcon className="h-4 w-4 text-yellow-500 mr-2" title="Este producto no tenía stock al momento del pedido"/>}
+                                                    {item.nombre_producto}
+                                                </td>
                                                 <td className="px-4 py-2 text-center text-sm">{isEditing ? <input type="number" value={item.cantidad} onChange={(e) => handleQuantityChange(item.id || item.producto_id, e.target.value)} className="w-16 text-center border rounded-md"/> : item.cantidad}</td>
                                                 <td className="px-4 py-2 text-right text-sm font-semibold">${(item.cantidad * item.precio_congelado)}</td>
                                                 {isEditing && <td className="px-4 py-2 text-right"><button onClick={() => handleRemoveItem(item.id || item.producto_id)} className="text-red-500 hover:text-red-700"><TrashIcon className="h-5 w-5"/></button></td>}
@@ -452,7 +518,7 @@
                                             {isEditing && <tbody><tr><td colSpan="4" className="p-2 relative">
                                                 <input type="text" value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Buscar producto para agregar..." className="w-full p-2 border rounded-md"/>
                                                 {productSearch && (
-                                                    <div className="absolute bg-white border shadow-lg max-h-48 overflow-y-auto w-full left-0">{filteredProductsToAdd.map(p => <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-gray-100 cursor-pointer">{p.nombre}</div>)}</div>
+                                                    <div className="absolute bg-white border shadow-lg max-h-48 overflow-y-auto w-full left-0 z-10">{filteredProductsToAdd.map(p => <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-gray-100 cursor-pointer">{p.nombre}</div>)}</div>
                                                 )}
                                             </td></tr></tbody>}
                                             <tfoot className="bg-gray-50 font-bold"><tr><td colSpan={isEditing ? 2 : 1} className="px-4 py-2 text-right">Total:</td><td className="px-4 py-2 text-right">${totalPedido}</td>{isEditing && <td></td>}</tr></tfoot>
