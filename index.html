@@ -307,12 +307,11 @@
 
             React.useEffect(() => { fetchPedidos(); }, [fetchPedidos]);
 
-            // CORRECCIÓN: La lógica se mueve aquí, dentro de una función async
-            const handleConfirmArchive = async () => {
+            const handleArchive = async () => {
                 if (!confirmArchive) return;
                 try {
                     await fetch(`${API_URL}/pedidos/${confirmArchive.id}/archive`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
-                    setConfirmArchive(null); // Cierra el modal SÓLO después de que la API responde
+                    setConfirmArchive(null);
                     fetchPedidos();
                 } catch(err) {
                     alert('Error al archivar el pedido.');
@@ -324,11 +323,17 @@
             
             return (
                 <div>
-                    {confirmArchive && <PasswordConfirmModal title={`¿Archivar Pedido #${confirmArchive.id}?`} message="El pedido se ocultará de la lista principal." onConfirm={handleConfirmArchive} onClose={() => setConfirmArchive(null)} />}
+                    {confirmArchive && <PasswordConfirmModal title={`¿Archivar Pedido #${confirmArchive.id}?`} message="El pedido se ocultará de la lista principal y se eliminará permanentemente en 30 días." onConfirm={handleArchive} onClose={() => setConfirmArchive(null)} />}
                     <div className="flex justify-between items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800">Bandeja de Pedidos</h1>
                         <div className="flex items-center gap-4">
-                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-4 w-4 rounded text-blue-600"/>Mostrar Archivados</label>
+                            {/* ** CORRECCIÓN: Switch en lugar de Checkbox ** */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Archivados</span>
+                                <button onClick={() => setShowArchived(!showArchived)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showArchived ? 'translate-x-6' : 'translate-x-1'}`}/>
+                                </button>
+                            </div>
                             <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/>
                         </div>
                     </div>
