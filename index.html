@@ -49,7 +49,6 @@
         const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>);
         const UserPlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>);
 
-        // *** NUEVO COMPONENTE: MODAL DE CONFIRMACIÓN CON CONTRASEÑA ***
         const PasswordConfirmModal = ({ title, message, onConfirm, onClose, loading }) => {
             const [password, setPassword] = React.useState('');
             const [error, setError] = React.useState('');
@@ -69,7 +68,7 @@
                     });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Contraseña incorrecta.');
-                    onConfirm(); // Si la contraseña es correcta, ejecuta la acción principal
+                    onConfirm();
                 } catch (err) {
                     setError(err.message);
                 }
@@ -286,8 +285,8 @@
             return { items: sortedItems, requestSort, sortConfig };
         };
         
-        // *** COMPONENTE MODIFICADO: PEDIDOSVIEW ***
-        const PedidosView = ({ onSelectPedido }) => {
+        // *** COMPONENTE CORREGIDO: PEDIDOSVIEW ***
+        const PedidosView = ({ onSelectPedido, user }) => { // <--- CORRECCIÓN: Se añade 'user' a los props
             const [pedidos, setPedidos] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [error, setError] = React.useState(null);
@@ -300,7 +299,6 @@
             const fetchPedidos = React.useCallback(async () => {
                 setLoading(true);
                 try {
-                    // La API ahora debe manejar el filtrado de archivados, por eso enviamos el estado de showArchived
                     const response = await fetch(`${API_URL}/pedidos?showArchived=${showArchived}`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!response.ok) throw new Error('No se pudo obtener la lista de pedidos.');
                     setPedidos(await response.json());
@@ -314,7 +312,7 @@
                 try {
                     await fetch(`${API_URL}/pedidos/${confirmArchive.id}/archive`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
                     setConfirmArchive(null);
-                    fetchPedidos(); // Recargar la lista
+                    fetchPedidos();
                 } catch (err) {
                     alert('Error al archivar el pedido.');
                     setConfirmArchive(null);
@@ -372,7 +370,7 @@
                                                 <td className="px-6 py-4 text-sm capitalize"><EstadoBadge estado={pedido.estado} /></td>
                                                 <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
                                                     <a href="#" onClick={(e) => { e.preventDefault(); onSelectPedido(pedido.id); }} className="text-blue-600 hover:text-blue-900">Ver / Editar</a>
-                                                    {pedido.estado !== 'archivado' && user.rol === 'admin' && (
+                                                    {pedido.estado !== 'archivado' && user && user.rol === 'admin' && ( // <--- CORRECCIÓN: Se comprueba que 'user' exista
                                                         <button onClick={() => setConfirmArchive(pedido)} className="text-gray-500 hover:text-red-700">Archivar</button>
                                                     )}
                                                 </td>
@@ -437,7 +435,7 @@
                         <div className="flex gap-2">
                             {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
                             <button onClick={handleExport} className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><DownloadIcon className="h-5 w-5 mr-2" /> Exportar</button>
-                            {isAdmin && (<button onClick={() => onShowProductoForm(null)} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
+                            {isAdmin && (<button onClick={() => onShowProductoForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
                         </div>
                     </div>
                     
@@ -501,7 +499,7 @@
             const isAdmin = user.rol === 'admin';
             return (
                 <div>
-                    <div className="flex justify-between items-center mb-6 gap-4"><h1 className="text-3xl font-bold text-gray-800">Gestión de Clientes</h1><input type="text" placeholder="Buscar por comercio o contacto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>{isAdmin && (<button onClick={() => onShowClienteForm(null)} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}</div>
+                    <div className="flex justify-between items-center mb-6 gap-4"><h1 className="text-3xl font-bold text-gray-800">Gestión de Clientes</h1><input type="text" placeholder="Buscar por comercio o contacto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>{isAdmin && (<button onClick={() => onShowClienteForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}</div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             {loading && <div className="p-6 flex justify-center"><Spinner className="border-blue-500"/></div>}
@@ -532,11 +530,10 @@
             );
         };
         
-        // *** NUEVO COMPONENTE: GESTIÓN DE USUARIOS ***
         const UsuariosView = ({ onShowUsuarioForm }) => {
             const [users, setUsers] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
-            const [confirmDelete, setConfirmDelete] = React.useState(null); // Guarda el usuario a eliminar
+            const [confirmDelete, setConfirmDelete] = React.useState(null);
             const token = localStorage.getItem('token');
 
             const fetchUsers = React.useCallback(async () => {
@@ -574,7 +571,7 @@
                     )}
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
-                        <button onClick={() => onShowUsuarioForm(null)} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"><UserPlusIcon className="h-5 w-5 mr-2" /> Agregar Usuario</button>
+                        <button onClick={() => onShowUsuarioForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"><UserPlusIcon className="h-5 w-5 mr-2" /> Agregar Usuario</button>
                     </div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -646,38 +643,39 @@
             
             const [integrityIssues, setIntegrityIssues] = React.useState([]);
 
-            React.useEffect(() => {
-                const fetchAllData = async () => {
-                    setLoading(true);
-                    try {
-                        const pedidoRes = await fetch(`${API_URL}/pedidos/${pedidoId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (!pedidoRes.ok) throw new Error('No se pudo obtener el detalle del pedido.');
-                        const pedidoData = await pedidoRes.json();
-                        setPedido(pedidoData);
-                        setEditableItems(pedidoData.items);
+            const fetchAllData = React.useCallback(async () => {
+                setLoading(true);
+                try {
+                    const pedidoRes = await fetch(`${API_URL}/pedidos/${pedidoId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!pedidoRes.ok) throw new Error('No se pudo obtener el detalle del pedido.');
+                    const pedidoData = await pedidoRes.json();
+                    setPedido(pedidoData);
+                    setEditableItems(pedidoData.items);
 
-                        const productsRes = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (!productsRes.ok) throw new Error('No se pudo obtener la lista de productos.');
-                        const allProductsData = await productsRes.json();
-                        setAllProducts(allProductsData);
+                    const productsRes = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!productsRes.ok) throw new Error('No se pudo obtener la lista de productos.');
+                    const allProductsData = await productsRes.json();
+                    setAllProducts(allProductsData);
 
-                        const issues = [];
-                        const productIds = allProductsData.map(p => p.id);
-                        pedidoData.items.forEach(item => {
-                            if (!productIds.includes(item.producto_id)) {
-                                issues.push(`El producto "${item.nombre_producto}" (ID: ${item.producto_id}) de este pedido ya no existe en la base de datos.`);
-                            }
-                        });
-                        setIntegrityIssues(issues);
+                    const issues = [];
+                    const productIds = allProductsData.map(p => p.id);
+                    pedidoData.items.forEach(item => {
+                        if (!productIds.includes(item.producto_id)) {
+                            issues.push(`El producto "${item.nombre_producto}" (ID: ${item.producto_id}) de este pedido ya no existe en la base de datos.`);
+                        }
+                    });
+                    setIntegrityIssues(issues);
 
-                    } catch (err) {
-                        setError(err.message);
-                    } finally {
-                        setLoading(false);
-                    }
-                };
-                fetchAllData();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
             }, [pedidoId, token]);
+            
+            React.useEffect(() => {
+                fetchAllData();
+            }, [fetchAllData]);
 
             const fetchLogs = async () => {
                 try {
@@ -878,8 +876,16 @@
             const [loading, setLoading] = React.useState(false);
             const [error, setError] = React.useState(null);
             const token = localStorage.getItem('token');
-            const isEditing = producto !== null;
-            React.useEffect(() => { if (isEditing) { setFormData({ codigo_sku: producto.codigo_sku || '', nombre: producto.nombre || '', descripcion: producto.descripcion || '', precio_unitario: producto.precio_unitario || '', stock: producto.stock || 'Sí', imagen_url: producto.imagen_url || '' }); } }, [producto, isEditing]);
+            const isEditing = producto && producto.id; // <--- CORRECCIÓN
+
+            React.useEffect(() => { 
+                if (isEditing) { 
+                    setFormData({ codigo_sku: producto.codigo_sku || '', nombre: producto.nombre || '', descripcion: producto.descripcion || '', precio_unitario: producto.precio_unitario || '', stock: producto.stock || 'Sí', imagen_url: producto.imagen_url || '' }); 
+                } else {
+                    setFormData({ codigo_sku: '', nombre: '', descripcion: '', precio_unitario: '', stock: 'Sí', imagen_url: '' });
+                }
+            }, [producto, isEditing]);
+
             const handleChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
             const handleSubmit = async (e) => {
                 e.preventDefault(); setLoading(true); setError(null);
@@ -916,8 +922,16 @@
             const [loading, setLoading] = React.useState(false);
             const [error, setError] = React.useState(null);
             const token = localStorage.getItem('token');
-            const isEditing = cliente !== null;
-            React.useEffect(() => { if (isEditing) { setFormData({ nombre_comercio: cliente.nombre_comercio || '', nombre_contacto: cliente.nombre_contacto || '', direccion: cliente.direccion || '', telefono: cliente.telefono || '' }); } }, [cliente, isEditing]);
+            const isEditing = cliente && cliente.id; // <--- CORRECCIÓN
+
+            React.useEffect(() => { 
+                if (isEditing) { 
+                    setFormData({ nombre_comercio: cliente.nombre_comercio || '', nombre_contacto: cliente.nombre_contacto || '', direccion: cliente.direccion || '', telefono: cliente.telefono || '' }); 
+                } else {
+                    setFormData({ nombre_comercio: '', nombre_contacto: '', direccion: '', telefono: '' });
+                }
+            }, [cliente, isEditing]);
+
             const handleChange = (e) => { const { name, value } = e.target; setFormData(prev => ({ ...prev, [name]: value })); };
             const handleSubmit = async (e) => {
                 e.preventDefault(); setLoading(true); setError(null);
@@ -946,22 +960,23 @@
             );
         };
         
-        // *** NUEVO COMPONENTE: FORMULARIO DE USUARIOS ***
         const UsuarioFormModal = ({ usuario, onClose, onSuccess }) => {
             const [formData, setFormData] = React.useState({ nombre: '', email: '', password: '', rol: 'vendedor' });
             const [loading, setLoading] = React.useState(false);
             const [error, setError] = React.useState(null);
             const token = localStorage.getItem('token');
-            const isEditing = usuario !== null;
+            const isEditing = usuario && usuario.id; // <--- CORRECCIÓN
 
             React.useEffect(() => {
-                if (isEditing && usuario) {
+                if (isEditing) {
                     setFormData({
                         nombre: usuario.nombre || '',
                         email: usuario.email || '',
-                        password: '', // La contraseña no se precarga por seguridad
+                        password: '',
                         rol: usuario.rol || 'vendedor'
                     });
+                } else {
+                    setFormData({ nombre: '', email: '', password: '', rol: 'vendedor' });
                 }
             }, [usuario, isEditing]);
 
@@ -1123,12 +1138,11 @@
             );
         };
 
-        // *** COMPONENTE DashboardPage MODIFICADO ***
         const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm }) => {
             const isAdmin = user.rol === 'admin';
             const renderContent = () => {
                 switch (currentPage) {
-                    case 'pedidos': return <PedidosView onSelectPedido={onShowPedido} user={user} />;
+                    case 'pedidos': return <PedidosView onSelectPedido={onShowPedido} user={user} />; // <--- CORRECCIÓN: Se pasa 'user'
                     case 'productos': return <ProductosView user={user} onShowProductoForm={onShowProductoForm} onShowImportModal={onShowImportModal} />;
                     case 'clientes': return <ClientesView user={user} onShowClienteForm={onShowClienteForm} />;
                     case 'usuarios': return <UsuariosView onShowUsuarioForm={onShowUsuarioForm} />;
@@ -1159,7 +1173,6 @@
             );
         };
 
-        // *** COMPONENTE App MODIFICADO ***
         function App() {
           const [currentPage, setCurrentPage] = React.useState('dashboard');
           const [token, setToken] = React.useState(localStorage.getItem('token'));
@@ -1257,3 +1270,4 @@
     </script>
 </body>
 </html>
+
