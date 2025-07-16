@@ -286,100 +286,73 @@
         };
         
         // *** COMPONENTE CORREGIDO: PEDIDOSVIEW ***
-        const PedidosView = ({ onSelectPedido, user }) => { // <--- CORRECCIÓN: Se añade 'user' a los props
+        const PedidosView = ({ onSelectPedido, user }) => {
             const [pedidos, setPedidos] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [error, setError] = React.useState(null);
             const [searchTerm, setSearchTerm] = React.useState('');
-            const [confirmArchive, setConfirmArchive] = React.useState(null);
             const [showArchived, setShowArchived] = React.useState(false);
+            const [confirmArchive, setConfirmArchive] = React.useState(null);
             const token = localStorage.getItem('token');
             const { items: sortedPedidos, requestSort, sortConfig } = useSortableData(pedidos, { key: 'id', direction: 'descending' });
-
+            
             const fetchPedidos = React.useCallback(async () => {
                 setLoading(true);
                 try {
-                    const response = await fetch(`${API_URL}/pedidos?showArchived=${showArchived}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const response = await fetch(`${API_URL}/pedidos`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!response.ok) throw new Error('No se pudo obtener la lista de pedidos.');
                     setPedidos(await response.json());
                 } catch (err) { setError(err.message); } finally { setLoading(false); }
-            }, [token, showArchived]);
+            }, [token]);
 
             React.useEffect(() => { fetchPedidos(); }, [fetchPedidos]);
 
-            const handleArchive = async () => {
+            // CORRECCIÓN: La lógica se mueve aquí, dentro de una función async
+            const handleConfirmArchive = async () => {
                 if (!confirmArchive) return;
                 try {
                     await fetch(`${API_URL}/pedidos/${confirmArchive.id}/archive`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
-                    setConfirmArchive(null);
+                    setConfirmArchive(null); // Cierra el modal SÓLO después de que la API responde
                     fetchPedidos();
-                } catch (err) {
+                } catch(err) {
                     alert('Error al archivar el pedido.');
                     setConfirmArchive(null);
                 }
             };
 
-            const filteredPedidos = sortedPedidos.filter(p =>
-                p.nombre_comercio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.nombre_vendedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.id.toString().includes(searchTerm)
-            );
-
+            const filteredPedidos = sortedPedidos.filter(p => (showArchived ? p.estado === 'archivado' : p.estado !== 'archivado') && (p.nombre_comercio.toLowerCase().includes(searchTerm.toLowerCase()) || p.nombre_vendedor.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.toString().includes(searchTerm)));
+            
             return (
                 <div>
-                    {confirmArchive && (
-                        <PasswordConfirmModal
-                            title={`¿Archivar Pedido #${confirmArchive.id}?`}
-                            message="El pedido se ocultará de la lista principal. Esta acción requiere confirmación."
-                            onConfirm={handleArchive}
-                            onClose={() => setConfirmArchive(null)}
-                        />
-                    )}
+                    {confirmArchive && <PasswordConfirmModal title={`¿Archivar Pedido #${confirmArchive.id}?`} message="El pedido se ocultará de la lista principal." onConfirm={handleConfirmArchive} onClose={() => setConfirmArchive(null)} />}
                     <div className="flex justify-between items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800">Bandeja de Pedidos</h1>
-                        <input type="text" placeholder="Buscar por cliente, vendedor o ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/>
-                        <label className="flex items-center cursor-pointer">
-                            <span className="mr-3 text-sm font-medium text-gray-900">Mostrar archivados</span>
-                            <div className="relative">
-                                <input type="checkbox" checked={showArchived} onChange={() => setShowArchived(!showArchived)} className="sr-only peer" />
-                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </div>
-                        </label>
+                        <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-4 w-4 rounded text-blue-600"/>Mostrar Archivados</label>
+                            <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/>
+                        </div>
                     </div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
-                            {loading && <div className="p-6 flex justify-center"><Spinner className="border-blue-500"/></div>}
-                            {error && <p className="p-6 text-red-500">{error}</p>}
-                            {!loading && !error && (
+                            {loading ? <div className="p-6 flex justify-center"><Spinner className="border-blue-500"/></div> : error ? <p className="p-6 text-red-500">{error}</p> : (
                                 <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50"><tr>
-                                        <TableHeader sortKey="id" sortConfig={sortConfig} onSort={requestSort}>ID</TableHeader>
-                                        <TableHeader sortKey="nombre_comercio" sortConfig={sortConfig} onSort={requestSort}>Cliente</TableHeader>
-                                        <TableHeader sortKey="nombre_vendedor" sortConfig={sortConfig} onSort={requestSort}>Vendedor</TableHeader>
-                                        <TableHeader sortKey="fecha_creacion" sortConfig={sortConfig} onSort={requestSort}>Fecha</TableHeader>
-                                        <TableHeader sortKey="estado" sortConfig={sortConfig} onSort={requestSort}>Estado</TableHeader>
-                                        <th className="relative px-6 py-3"><span className="sr-only">Acciones</span></th>
-                                    </tr></thead>
+                                    <thead className="bg-gray-50"><tr><TableHeader sortKey="id" sortConfig={sortConfig} onSort={requestSort}>ID</TableHeader><TableHeader sortKey="nombre_comercio" sortConfig={sortConfig} onSort={requestSort}>Cliente</TableHeader><TableHeader sortKey="nombre_vendedor" sortConfig={sortConfig} onSort={requestSort}>Vendedor</TableHeader><TableHeader sortKey="fecha_creacion" sortConfig={sortConfig} onSort={requestSort}>Fecha</TableHeader><TableHeader sortKey="estado" sortConfig={sortConfig} onSort={requestSort}>Estado</TableHeader><th className="relative px-6 py-3"></th></tr></thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredPedidos.map((pedido) => (
                                             <tr key={pedido.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm font-medium text-gray-900">#{pedido.id}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_comercio}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_vendedor}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{new Date(pedido.fecha_creacion).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 text-sm font-medium text-gray-900">#{pedido.id}</td><td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_comercio}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_vendedor}</td><td className="px-6 py-4 text-sm text-gray-700">{new Date(pedido.fecha_creacion).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 text-sm capitalize"><EstadoBadge estado={pedido.estado} /></td>
                                                 <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
-                                                    <a href="#" onClick={(e) => { e.preventDefault(); onSelectPedido(pedido.id); }} className="text-blue-600 hover:text-blue-900">Ver / Editar</a>
-                                                    {pedido.estado !== 'archivado' && user && user.rol === 'admin' && ( // <--- CORRECCIÓN: Se comprueba que 'user' exista
-                                                        <button onClick={() => setConfirmArchive(pedido)} className="text-gray-500 hover:text-red-700">Archivar</button>
-                                                    )}
+                                                    <button onClick={() => onSelectPedido(pedido.id)} className="text-blue-600 hover:text-blue-900">Ver</button>
+                                                    {user.rol === 'admin' && pedido.estado !== 'archivado' && (<button onClick={() => setConfirmArchive(pedido)} className="text-gray-500 hover:text-red-700">Archivar</button>)}
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             )}
-                             {!loading && filteredPedidos.length === 0 && <p className="p-6 text-center text-gray-500">No se encontraron resultados.</p>}
+                            {!loading && filteredPedidos.length === 0 && <p className="p-6 text-center text-gray-500">No se encontraron resultados.</p>}
                         </div>
                     </div>
                 </div>
