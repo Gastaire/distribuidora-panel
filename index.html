@@ -25,7 +25,8 @@
     <div id="root"></div>
     <script type="text/babel">
         const API_URL = 'https://distriapi.onzacore.site/api';
-        // --- Componentes de Iconos (Ultimo añadido) ---
+
+        // --- Componentes de Iconos ---
         const HomeIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>);
         const PackageIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16.5 9.4a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/><path d="M19 13.3a9 9 0 1 1-14 0"/><path d="M12 17.5a2.5 2.5 0 0 1-2.5-2.5V9.4h5v5.6a2.5 2.5 0 0 1-2.5 2.5Z"/></svg>);
         const UsersIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
@@ -34,7 +35,6 @@
         const CloseIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>);
         const PlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>);
         const PrintIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>);
-        // ** ICONO AÑADIDO **
         const ShoppingCartIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>);
         const HistoryIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>);
         const SortIcon = ({ direction }) => {
@@ -47,6 +47,54 @@
         const ActivityIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>);
         const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>);
         const UploadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>);
+        const UserPlusIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>);
+
+        // *** NUEVO COMPONENTE: MODAL DE CONFIRMACIÓN CON CONTRASEÑA ***
+        const PasswordConfirmModal = ({ title, message, onConfirm, onClose, loading }) => {
+            const [password, setPassword] = React.useState('');
+            const [error, setError] = React.useState('');
+            const token = localStorage.getItem('token');
+
+            const handleConfirm = async () => {
+                setError('');
+                if (!password) {
+                    setError('La contraseña es requerida.');
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_URL}/auth/reauthenticate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ password })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Contraseña incorrecta.');
+                    onConfirm(); // Si la contraseña es correcta, ejecuta la acción principal
+                } catch (err) {
+                    setError(err.message);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+                            <p className="text-gray-600 mt-2">{message}</p>
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700">Confirma tu contraseña</label>
+                                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"/>
+                                {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 flex justify-end items-center gap-4 rounded-b-xl">
+                            <button onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                            <button onClick={handleConfirm} disabled={loading} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">{loading ? 'Confirmando...' : 'Confirmar'}</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         const LoginPage = ({ onLogin, loading, error }) => {
           const [email, setEmail] = React.useState('');
@@ -67,6 +115,7 @@
             </div>
           );
         };
+        
         const DashboardView = () => {
             const [stats, setStats] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
@@ -75,7 +124,6 @@
             const [topProductsLimit, setTopProductsLimit] = React.useState(5);
             const token = localStorage.getItem('token');
             
-            // Usamos un objeto para mantener referencias a los gráficos y poder destruirlos
             const chartInstances = React.useRef({});
 
             const fetchStats = React.useCallback(async () => {
@@ -97,9 +145,7 @@
                 fetchStats();
             }, [fetchStats]);
             
-            // Efecto para renderizar los gráficos
             React.useEffect(() => {
-                // Destruir gráficos anteriores para evitar solapamiento
                 Object.values(chartInstances.current).forEach(chart => chart.destroy());
                 chartInstances.current = {};
 
@@ -206,45 +252,17 @@
                 </div>
             );
         };
-        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal }) => {
-            const isAdmin = user.rol === 'admin';
-            const renderContent = () => {
-                switch (currentPage) {
-                    case 'pedidos': return <PedidosView onSelectPedido={onShowPedido} />;
-                    case 'productos': return <ProductosView user={user} onShowProductoForm={onShowProductoForm} onShowImportModal={onShowImportModal} />;
-                    case 'clientes': return <ClientesView user={user} onShowClienteForm={onShowClienteForm} />;
-                    case 'actividad': return <ActividadView />;
-                    case 'dashboard': return <DashboardView />; 
-                    default: return <DashboardView />;
-                }
-            };
-            return (
-                <div className="flex h-screen bg-gray-100 font-sans">
-                    <aside className="w-64 bg-gray-800 text-white flex flex-col shrink-0">
-                        <div className="h-20 flex items-center justify-center border-b border-gray-700"><PackageIcon className="h-8 w-8 mr-2" /><span className="text-xl font-bold">Distribuidora</span></div>
-                        <nav className="flex-1 px-4 py-6 space-y-2">
-                            <NavItem icon={<HomeIcon />} text="Dashboard" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} />
-                            <NavItem icon={<ShoppingCartIcon />} text="Pedidos" active={currentPage === 'pedidos'} onClick={() => setCurrentPage('pedidos')} />
-                            <NavItem icon={<PackageIcon />} text="Productos" active={currentPage === 'productos'} onClick={() => setCurrentPage('productos')} />
-                            <NavItem icon={<UsersIcon />} text="Clientes" active={currentPage === 'clientes'} onClick={() => setCurrentPage('clientes')} />
-                            {isAdmin && <NavItem icon={<ActivityIcon />} text="Actividad" active={currentPage === 'actividad'} onClick={() => setCurrentPage('actividad')} />}
-                        </nav>
-                        <div className="px-4 py-6 border-t border-gray-700">
-                            <div className="mb-4"><p className="text-sm font-semibold">{user.nombre}</p><p className="text-xs text-gray-400 capitalize">{user.rol}</p></div>
-                            <button onClick={onLogout} className="w-full flex items-center justify-center py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold"><LogOutIcon className="h-5 w-5 mr-2" />Cerrar Sesión</button>
-                        </div>
-                    </aside>
-                    <main className="flex-1 p-8 overflow-y-auto">{renderContent()}</main>
-                </div>
-            );
-        };
+        
         const NavItem = ({ icon, text, active, onClick }) => (<a href="#" onClick={onClick} className={`flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${ active ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }`}><span className="mr-3">{icon}</span><span className="font-medium">{text}</span></a>);
+        
         const EstadoBadge = ({ estado }) => {
-            const estados = { pendiente: 'Pendiente', visto: 'Visto', en_preparacion: 'En Preparación', facturado: 'Facturado', listo_para_entrega: 'Listo p/ Entrega', entregado: 'Entregado', cancelado: 'Cancelado' };
-            const styles = { pendiente: 'bg-yellow-100 text-yellow-800', visto: 'bg-blue-100 text-blue-800', en_preparacion: 'bg-indigo-100 text-indigo-800', entregado: 'bg-green-100 text-green-800', listo_para_entrega: 'bg-purple-100 text-purple-800', facturado: 'bg-gray-200 text-gray-800', cancelado: 'bg-red-100 text-red-800' };
+            const estados = { pendiente: 'Pendiente', visto: 'Visto', en_preparacion: 'En Preparación', facturado: 'Facturado', listo_para_entrega: 'Listo p/ Entrega', entregado: 'Entregado', cancelado: 'Cancelado', archivado: 'Archivado' };
+            const styles = { pendiente: 'bg-yellow-100 text-yellow-800', visto: 'bg-blue-100 text-blue-800', en_preparacion: 'bg-indigo-100 text-indigo-800', entregado: 'bg-green-100 text-green-800', listo_para_entrega: 'bg-purple-100 text-purple-800', facturado: 'bg-gray-200 text-gray-800', cancelado: 'bg-red-100 text-red-800', archivado: 'bg-gray-400 text-white' };
             return (<span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${styles[estado] || 'bg-gray-100 text-gray-800'}`}>{estados[estado] || estado}</span>);
         };
+        
         const TableHeader = ({ children, sortKey, sortConfig, onSort }) => (<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" onClick={() => onSort(sortKey)}>{children}{sortConfig.key === sortKey ? <SortIcon direction={sortConfig.direction} /> : <SortIcon />}</th>);
+        
         const useSortableData = (items, config = null) => {
             const [sortConfig, setSortConfig] = React.useState(config);
             const sortedItems = React.useMemo(() => {
@@ -267,26 +285,69 @@
             };
             return { items: sortedItems, requestSort, sortConfig };
         };
+        
+        // *** COMPONENTE MODIFICADO: PEDIDOSVIEW ***
         const PedidosView = ({ onSelectPedido }) => {
             const [pedidos, setPedidos] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
             const [error, setError] = React.useState(null);
             const [searchTerm, setSearchTerm] = React.useState('');
+            const [confirmArchive, setConfirmArchive] = React.useState(null);
+            const [showArchived, setShowArchived] = React.useState(false);
             const token = localStorage.getItem('token');
             const { items: sortedPedidos, requestSort, sortConfig } = useSortableData(pedidos, { key: 'id', direction: 'descending' });
+
             const fetchPedidos = React.useCallback(async () => {
                 setLoading(true);
                 try {
-                    const response = await fetch(`${API_URL}/pedidos`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    // La API ahora debe manejar el filtrado de archivados, por eso enviamos el estado de showArchived
+                    const response = await fetch(`${API_URL}/pedidos?showArchived=${showArchived}`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!response.ok) throw new Error('No se pudo obtener la lista de pedidos.');
                     setPedidos(await response.json());
                 } catch (err) { setError(err.message); } finally { setLoading(false); }
-            }, [token]);
+            }, [token, showArchived]);
+
             React.useEffect(() => { fetchPedidos(); }, [fetchPedidos]);
-            const filteredPedidos = sortedPedidos.filter(p => p.nombre_comercio.toLowerCase().includes(searchTerm.toLowerCase()) || p.nombre_vendedor.toLowerCase().includes(searchTerm.toLowerCase()) || p.id.toString().includes(searchTerm));
+
+            const handleArchive = async () => {
+                if (!confirmArchive) return;
+                try {
+                    await fetch(`${API_URL}/pedidos/${confirmArchive.id}/archive`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+                    setConfirmArchive(null);
+                    fetchPedidos(); // Recargar la lista
+                } catch (err) {
+                    alert('Error al archivar el pedido.');
+                    setConfirmArchive(null);
+                }
+            };
+
+            const filteredPedidos = sortedPedidos.filter(p =>
+                p.nombre_comercio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.nombre_vendedor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.id.toString().includes(searchTerm)
+            );
+
             return (
                 <div>
-                    <div className="flex justify-between items-center mb-6 gap-4"><h1 className="text-3xl font-bold text-gray-800">Bandeja de Pedidos</h1><input type="text" placeholder="Buscar por cliente, vendedor o ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/></div>
+                    {confirmArchive && (
+                        <PasswordConfirmModal
+                            title={`¿Archivar Pedido #${confirmArchive.id}?`}
+                            message="El pedido se ocultará de la lista principal. Esta acción requiere confirmación."
+                            onConfirm={handleArchive}
+                            onClose={() => setConfirmArchive(null)}
+                        />
+                    )}
+                    <div className="flex justify-between items-center mb-6 gap-4">
+                        <h1 className="text-3xl font-bold text-gray-800">Bandeja de Pedidos</h1>
+                        <input type="text" placeholder="Buscar por cliente, vendedor o ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/>
+                        <label className="flex items-center cursor-pointer">
+                            <span className="mr-3 text-sm font-medium text-gray-900">Mostrar archivados</span>
+                            <div className="relative">
+                                <input type="checkbox" checked={showArchived} onChange={() => setShowArchived(!showArchived)} className="sr-only peer" />
+                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                        </label>
+                    </div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             {loading && <div className="p-6 flex justify-center"><Spinner className="border-blue-500"/></div>}
@@ -304,10 +365,17 @@
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredPedidos.map((pedido) => (
                                             <tr key={pedido.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 text-sm font-medium text-gray-900">#{pedido.id}</td><td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_comercio}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_vendedor}</td><td className="px-6 py-4 text-sm text-gray-700">{new Date(pedido.fecha_creacion).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 text-sm font-medium text-gray-900">#{pedido.id}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_comercio}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{pedido.nombre_vendedor}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{new Date(pedido.fecha_creacion).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 text-sm capitalize"><EstadoBadge estado={pedido.estado} /></td>
-                                                <td className="px-6 py-4 text-right text-sm font-medium"><a href="#" onClick={(e) => { e.preventDefault(); onSelectPedido(pedido.id); }} className="text-blue-600 hover:text-blue-900">Ver / Editar</a></td>
+                                                <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); onSelectPedido(pedido.id); }} className="text-blue-600 hover:text-blue-900">Ver / Editar</a>
+                                                    {pedido.estado !== 'archivado' && user.rol === 'admin' && (
+                                                        <button onClick={() => setConfirmArchive(pedido)} className="text-gray-500 hover:text-red-700">Archivar</button>
+                                                    )}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -319,6 +387,7 @@
                 </div>
             );
         };
+        
         const ProductosView = ({ user, onShowProductoForm, onShowImportModal }) => {
             const [productos, setProductos] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
@@ -462,6 +531,73 @@
                 </div>
             );
         };
+        
+        // *** NUEVO COMPONENTE: GESTIÓN DE USUARIOS ***
+        const UsuariosView = ({ onShowUsuarioForm }) => {
+            const [users, setUsers] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            const [confirmDelete, setConfirmDelete] = React.useState(null); // Guarda el usuario a eliminar
+            const token = localStorage.getItem('token');
+
+            const fetchUsers = React.useCallback(async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch(`${API_URL}/usuarios`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    setUsers(await response.json());
+                } finally {
+                    setLoading(false);
+                }
+            }, [token]);
+
+            React.useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+            const handleDelete = async () => {
+                try {
+                    await fetch(`${API_URL}/usuarios/${confirmDelete.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    setConfirmDelete(null);
+                    fetchUsers();
+                } catch (err) {
+                    alert("Error al eliminar el usuario.");
+                    setConfirmDelete(null);
+                }
+            };
+
+            return (
+                <div>
+                    {confirmDelete && (
+                        <PasswordConfirmModal
+                            title={`¿Eliminar a ${confirmDelete.nombre}?`}
+                            message="Esta acción es irreversible. Todos los datos asociados a este usuario se perderán."
+                            onConfirm={handleDelete}
+                            onClose={() => setConfirmDelete(null)}
+                        />
+                    )}
+                    <div className="flex justify-between items-center mb-6">
+                        <h1 className="text-3xl font-bold text-gray-800">Gestión de Usuarios</h1>
+                        <button onClick={() => onShowUsuarioForm(null)} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"><UserPlusIcon className="h-5 w-5 mr-2" /> Agregar Usuario</button>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th><th className="relative px-6 py-3"></th></tr></thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {users.map(user => (
+                                    <tr key={user.id}>
+                                        <td className="px-6 py-4 font-medium">{user.nombre}</td>
+                                        <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                                        <td className="px-6 py-4 text-gray-600 capitalize">{user.rol}</td>
+                                        <td className="px-6 py-4 text-right space-x-4">
+                                            <button onClick={() => onShowUsuarioForm(user)} className="text-blue-600 hover:text-blue-900">Editar</button>
+                                            <button onClick={() => setConfirmDelete(user)} className="text-red-600 hover:text-red-900">Eliminar</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
         const ActividadView = () => {
             const [logs, setLogs] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
@@ -508,27 +644,23 @@
             const [showLogs, setShowLogs] = React.useState(false);
             const token = localStorage.getItem('token');
             
-            // Chequeo de integridad
             const [integrityIssues, setIntegrityIssues] = React.useState([]);
 
             React.useEffect(() => {
                 const fetchAllData = async () => {
                     setLoading(true);
                     try {
-                        // 1. Fetch del pedido
                         const pedidoRes = await fetch(`${API_URL}/pedidos/${pedidoId}`, { headers: { 'Authorization': `Bearer ${token}` } });
                         if (!pedidoRes.ok) throw new Error('No se pudo obtener el detalle del pedido.');
                         const pedidoData = await pedidoRes.json();
                         setPedido(pedidoData);
                         setEditableItems(pedidoData.items);
 
-                        // 2. Fetch de todos los productos para la comparación
                         const productsRes = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
                         if (!productsRes.ok) throw new Error('No se pudo obtener la lista de productos.');
                         const allProductsData = await productsRes.json();
                         setAllProducts(allProductsData);
 
-                        // 3. Chequeo de integridad
                         const issues = [];
                         const productIds = allProductsData.map(p => p.id);
                         pedidoData.items.forEach(item => {
@@ -551,7 +683,6 @@
                 try {
                     const response = await fetch(`${API_URL}/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
                     const allLogs = await response.json();
-                    // Filtrar logs específicos para este pedido
                     const filtered = allLogs.filter(log => log.detalle && log.detalle.includes(`#${pedidoId}`));
                     setLogs(filtered);
                     setShowLogs(true);
@@ -560,7 +691,6 @@
                 }
             };
             
-            // ... (resto de funciones sin cambios: handleUpdateStatus, handleQuantityChange, handleRemoveItem, handleAddItem, handleSaveChanges, handlePrint) ...
             const handleUpdateStatus = async (nuevoEstado) => {
                 try {
                     const response = await fetch(`${API_URL}/pedidos/${pedidoId}/estado`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ estado: nuevoEstado }) });
@@ -616,7 +746,6 @@
                             {error && <p className="p-8 text-red-500">{error}</p>}
                             {pedido && (
                                 <div className="p-6 overflow-y-auto">
-                                    {/* Componente de Logs y Alertas */}
                                     {showLogs && (
                                         <div className="mb-4 p-4 bg-gray-100 rounded-lg">
                                             <div className="flex justify-between items-center mb-2">
@@ -636,7 +765,6 @@
                                             ) : <p className="text-sm text-gray-500">No hay registros de modificación para este pedido.</p>}
                                         </div>
                                     )}
-                                    {/* Fin de Logs */}
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                         <div><h3 className="font-bold text-gray-800 mb-2">Cliente</h3><p className="text-gray-600">{pedido.nombre_comercio}</p><p className="text-gray-500 text-sm">{pedido.direccion}</p></div>
@@ -667,7 +795,7 @@
                                             <tfoot className="bg-gray-50 font-bold"><tr><td colSpan={isEditing ? 2 : 1} className="px-4 py-2 text-right">Total:</td><td className="px-4 py-2 text-right">${totalPedido}</td>{isEditing && <td></td>}</tr></tfoot>
                                         </table>
                                     </div>
-                                    {isEditing && (<div className="flex justify-end gap-4"><button onClick={() => { setIsEditing(false); fetchPedido(); }} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button><button onClick={handleSaveChanges} className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Guardar Cambios</button></div>)}
+                                    {isEditing && (<div className="flex justify-end gap-4"><button onClick={() => { setIsEditing(false); fetchAllData(); }} className="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button><button onClick={handleSaveChanges} className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg">Guardar Cambios</button></div>)}
                                     
                                     {(isAdmin || isDeposito) && !isEditing && (
                                         <div className="bg-gray-50 p-4 rounded-lg mt-4">
@@ -817,6 +945,99 @@
                 </div>
             );
         };
+        
+        // *** NUEVO COMPONENTE: FORMULARIO DE USUARIOS ***
+        const UsuarioFormModal = ({ usuario, onClose, onSuccess }) => {
+            const [formData, setFormData] = React.useState({ nombre: '', email: '', password: '', rol: 'vendedor' });
+            const [loading, setLoading] = React.useState(false);
+            const [error, setError] = React.useState(null);
+            const token = localStorage.getItem('token');
+            const isEditing = usuario !== null;
+
+            React.useEffect(() => {
+                if (isEditing && usuario) {
+                    setFormData({
+                        nombre: usuario.nombre || '',
+                        email: usuario.email || '',
+                        password: '', // La contraseña no se precarga por seguridad
+                        rol: usuario.rol || 'vendedor'
+                    });
+                }
+            }, [usuario, isEditing]);
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setError(null);
+
+                const url = isEditing ? `${API_URL}/usuarios/${usuario.id}` : `${API_URL}/usuarios`;
+                const method = isEditing ? 'PUT' : 'POST';
+                
+                const body = { ...formData };
+                if (body.password === '') {
+                    delete body.password;
+                }
+
+                try {
+                    const response = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Error al guardar el usuario.');
+                    onSuccess();
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h2 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar Usuario' : 'Agregar Usuario'}</h2>
+                            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            <div>
+                                <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                                <input type="text" name="nombre" id="nombre" value={formData.nombre} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required />
+                            </div>
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
+                                <input type="email" name="email" id="email" value={formData.email} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required />
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Contraseña</label>
+                                <input type="password" name="password" id="password" value={formData.password} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder={isEditing ? "Dejar en blanco para no cambiar" : ""} />
+                            </div>
+                             <div>
+                                <label htmlFor="rol" className="block text-sm font-medium text-gray-700">Rol</label>
+                                <select name="rol" id="rol" value={formData.rol} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                                    <option value="vendedor">Vendedor</option>
+                                    <option value="deposito">Depósito</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 flex justify-end items-center gap-4">
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                            <button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">{loading ? 'Guardando...' : 'Guardar Usuario'}</button>
+                        </div>
+                    </form>
+                </div>
+            );
+        };
+
         const ImportModal = ({ onClose, onSuccess }) => {
             const [file, setFile] = React.useState(null);
             const [loading, setLoading] = React.useState(false);
@@ -901,6 +1122,44 @@
                 </div>
             );
         };
+
+        // *** COMPONENTE DashboardPage MODIFICADO ***
+        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm }) => {
+            const isAdmin = user.rol === 'admin';
+            const renderContent = () => {
+                switch (currentPage) {
+                    case 'pedidos': return <PedidosView onSelectPedido={onShowPedido} user={user} />;
+                    case 'productos': return <ProductosView user={user} onShowProductoForm={onShowProductoForm} onShowImportModal={onShowImportModal} />;
+                    case 'clientes': return <ClientesView user={user} onShowClienteForm={onShowClienteForm} />;
+                    case 'usuarios': return <UsuariosView onShowUsuarioForm={onShowUsuarioForm} />;
+                    case 'actividad': return <ActividadView />;
+                    case 'dashboard': return <DashboardView />; 
+                    default: return <DashboardView />;
+                }
+            };
+            return (
+                <div className="flex h-screen bg-gray-100 font-sans">
+                    <aside className="w-64 bg-gray-800 text-white flex flex-col shrink-0">
+                        <div className="h-20 flex items-center justify-center border-b border-gray-700"><PackageIcon className="h-8 w-8 mr-2" /><span className="text-xl font-bold">Distribuidora</span></div>
+                        <nav className="flex-1 px-4 py-6 space-y-2">
+                            <NavItem icon={<HomeIcon />} text="Dashboard" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} />
+                            <NavItem icon={<ShoppingCartIcon />} text="Pedidos" active={currentPage === 'pedidos'} onClick={() => setCurrentPage('pedidos')} />
+                            <NavItem icon={<PackageIcon />} text="Productos" active={currentPage === 'productos'} onClick={() => setCurrentPage('productos')} />
+                            <NavItem icon={<UsersIcon />} text="Clientes" active={currentPage === 'clientes'} onClick={() => setCurrentPage('clientes')} />
+                            {isAdmin && <NavItem icon={<UsersIcon />} text="Usuarios" active={currentPage === 'usuarios'} onClick={() => setCurrentPage('usuarios')} />}
+                            {isAdmin && <NavItem icon={<ActivityIcon />} text="Actividad" active={currentPage === 'actividad'} onClick={() => setCurrentPage('actividad')} />}
+                        </nav>
+                        <div className="px-4 py-6 border-t border-gray-700">
+                            <div className="mb-4"><p className="text-sm font-semibold">{user.nombre}</p><p className="text-xs text-gray-400 capitalize">{user.rol}</p></div>
+                            <button onClick={onLogout} className="w-full flex items-center justify-center py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold"><LogOutIcon className="h-5 w-5 mr-2" />Cerrar Sesión</button>
+                        </div>
+                    </aside>
+                    <main className="flex-1 p-8 overflow-y-auto">{renderContent()}</main>
+                </div>
+            );
+        };
+
+        // *** COMPONENTE App MODIFICADO ***
         function App() {
           const [currentPage, setCurrentPage] = React.useState('dashboard');
           const [token, setToken] = React.useState(localStorage.getItem('token'));
@@ -910,6 +1169,7 @@
           const [viewingPedidoId, setViewingPedidoId] = React.useState(null);
           const [editingProducto, setEditingProducto] = React.useState(null);
           const [editingCliente, setEditingCliente] = React.useState(null);
+          const [editingUsuario, setEditingUsuario] = React.useState(null);
           const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);          
 
           const handleLogin = React.useCallback(async (email, password) => {
@@ -925,7 +1185,7 @@
 
           const handleLogout = React.useCallback(() => {
             localStorage.removeItem('token'); localStorage.removeItem('user');
-            setToken(null); setUser(null); setViewingPedidoId(null); setEditingProducto(null); setEditingCliente(null);
+            setToken(null); setUser(null); setViewingPedidoId(null); setEditingProducto(null); setEditingCliente(null); setEditingUsuario(null);
           }, []);
           
           const forceRerender = (page) => {
@@ -953,6 +1213,7 @@
                     onShowProductoForm={setEditingProducto}
                     onShowClienteForm={setEditingCliente}
                     onShowImportModal={() => setIsImportModalOpen(true)}
+                    onShowUsuarioForm={setEditingUsuario}
                 />
                 {viewingPedidoId && (
                     <PedidoDetailModal
@@ -974,6 +1235,13 @@
                         cliente={editingCliente}
                         onClose={() => setEditingCliente(null)}
                         onSuccess={() => { setEditingCliente(null); forceRerender('clientes'); }}
+                    />
+                )}
+                {editingUsuario !== null && (
+                    <UsuarioFormModal 
+                        usuario={editingUsuario} 
+                        onClose={() => setEditingUsuario(null)} 
+                        onSuccess={() => { setEditingUsuario(null); forceRerender('usuarios'); }} 
                     />
                 )}
                 {isImportModalOpen && (
