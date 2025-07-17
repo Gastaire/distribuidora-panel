@@ -1313,10 +1313,7 @@
                         onClose={() => setIsImportModalOpen(false)}
                         onSuccess={() => forceRerender('productos')}
                     />
-                {isImportVentasModalOpen && (
-                    <ImportVentasModal 
-                        onClose={() => { setIsImportVentasModalOpen(false); forceRerender('dashboard'); }} />)}
-                )}
+                {isImportVentasModalOpen && (<ImportVentasModal onClose={() => { setIsImportVentasModalOpen(false); forceRerender('dashboard'); }} />)}
             </React.Fragment>
           );
         }
