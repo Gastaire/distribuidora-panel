@@ -1055,57 +1055,6 @@
                 setError(null);
             };
 
-            const ImportVentasModal = ({ onClose }) => {
-            const [file, setFile] = React.useState(null);
-            const [loading, setLoading] = React.useState(false);
-            const [message, setMessage] = React.useState('');
-            const [error, setError] = React.useState(null);
-            const token = localStorage.getItem('token');
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                if (!file) { setError('Por favor, selecciona un archivo CSV.'); return; }
-                setLoading(true); setError(null); setMessage('');
-
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    const response = await fetch(`${API_URL}/import/ventas-presenciales`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData,
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.message || 'Error al importar archivo.');
-                    setMessage(data.message);
-                } catch (err) {
-                    setError(err.message);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            return (
-                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-                    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-                        <div className="flex justify-between items-center p-4 border-b"><h2 className="text-xl font-bold text-gray-800">Importar Ventas Presenciales (CSV)</h2><button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button></div>
-                        <div className="p-6 overflow-y-auto space-y-4">
-                            <p className="text-sm text-gray-600">Selecciona el archivo CSV exportado desde el sistema de ventas presencial.</p>
-                            <input type="file" accept=".csv" onChange={e => setFile(e.target.files[0])} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                             {message && <p className="p-3 bg-green-100 text-green-800 rounded-md">{message}</p>}
-                             {error && <p className="p-3 bg-red-100 text-red-800 rounded-md">{error}</p>}
-                        </div>
-                        <div className="p-4 border-t bg-gray-50 flex justify-end items-center gap-4">
-                            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cerrar</button>
-                            <button type="submit" disabled={loading || !file} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center disabled:bg-gray-400">
-                                {loading ? 'Importando...' : 'Importar Ventas'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            );
-        };
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
@@ -1179,6 +1128,59 @@
             );
         };
 
+
+        const ImportVentasModal = ({ onClose }) => {
+            const [file, setFile] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+            const [message, setMessage] = React.useState('');
+            const [error, setError] = React.useState(null);
+            const token = localStorage.getItem('token');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!file) { setError('Por favor, selecciona un archivo CSV.'); return; }
+                setLoading(true); setError(null); setMessage('');
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`${API_URL}/import/ventas-presenciales`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData,
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Error al importar archivo.');
+                    setMessage(data.message);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
+                        <div className="flex justify-between items-center p-4 border-b"><h2 className="text-xl font-bold text-gray-800">Importar Ventas Presenciales (CSV)</h2><button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button></div>
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            <p className="text-sm text-gray-600">Selecciona el archivo CSV exportado desde el sistema de ventas presencial.</p>
+                            <input type="file" accept=".csv" onChange={e => setFile(e.target.files[0])} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                             {message && <p className="p-3 bg-green-100 text-green-800 rounded-md">{message}</p>}
+                             {error && <p className="p-3 bg-red-100 text-red-800 rounded-md">{error}</p>}
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 flex justify-end items-center gap-4">
+                            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cerrar</button>
+                            <button type="submit" disabled={loading || !file} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center disabled:bg-gray-400">
+                                {loading ? 'Importando...' : 'Importar Ventas'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            );
+        };
+        
         const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm }) => {
             const isAdmin = user.rol === 'admin';
             const renderContent = () => {
