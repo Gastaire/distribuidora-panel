@@ -158,7 +158,7 @@
                         chartInstances.current.productsChart = new Chart(productsCtx, { type: 'bar', data: { labels: stats.topProducts.map(p => p.nombre), datasets: [{ label: 'Unidades Vendidas', data: stats.topProducts.map(p => p.totalQuantity), backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(249, 115, 22, 0.7)', 'rgba(245, 158, 11, 0.7)', 'rgba(132, 204, 22, 0.7)', 'rgba(34, 197, 94, 0.7)'] }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
                     }
                     const customersCtx = document.getElementById('customersChart');
-                    if (customersCtx && stats.topCustomers.length > 0) {
+                    if (customersCtx && stats.topCustomers && stats.topCustomers.length > 0) {
                          chartInstances.current.customersChart = new Chart(customersCtx, { type: 'doughnut', data: { labels: stats.topCustomers.map(c => c.nombre_comercio), datasets: [{ label: 'Monto Comprado', data: stats.topCustomers.map(c => c.totalSpent), backgroundColor: ['#4c51bf', '#667eea', '#7f9cf5', '#a3bffa', '#c3dafe'] }] } });
                     }
                 }
@@ -172,6 +172,7 @@
                         <div><h1 className="text-3xl font-bold text-gray-800">Dashboard</h1><p className="text-gray-500">Resumen general de la actividad.</p></div>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 bg-gray-200 p-1 rounded-lg"><button onClick={() => setDataSource('pedidos')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${dataSource === 'pedidos' ? 'bg-white shadow text-blue-600' : 'text-gray-600'}`}>Pedidos App</button><button onClick={() => setDataSource('presencial')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${dataSource === 'presencial' ? 'bg-white shadow text-blue-600' : 'text-gray-600'}`}>Ventas Presenciales</button></div>
+                            {/* ✅ CORRECCIÓN: Se asegura que el onClick esté correctamente asignado */}
                             <button onClick={onShowImportVentasModal} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>
                         </div>
                     </div>
@@ -195,7 +196,7 @@
                                     <canvas id="productsChart"></canvas>
                                 </div>
                             </div>
-                            {dataSource === 'pedidos' && (
+                            {dataSource === 'pedidos' && stats.topCustomers && stats.salesBySeller && (
                                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                                     <div className="lg:col-span-3 bg-white rounded-xl shadow-lg"><h3 className="font-bold text-lg p-6">Rendimiento por Vendedor</h3><div className="overflow-x-auto"><table className="min-w-full"><thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendedor</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pedidos</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Vendido</th></tr></thead><tbody className="divide-y divide-gray-200">{stats.salesBySeller.map(seller => (<tr key={seller.nombre}><td className="px-6 py-4 font-medium text-gray-900">{seller.nombre}</td><td className="px-6 py-4 text-gray-700">{seller.orderCount}</td><td className="px-6 py-4 text-gray-700">${parseFloat(seller.totalSold).toLocaleString('es-AR')}</td></tr>))}</tbody></table></div></div>
                                     <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h3 className="font-bold text-lg mb-4">Top 5 Clientes (por Monto)</h3><canvas id="customersChart"></canvas></div>
