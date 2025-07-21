@@ -1351,13 +1351,13 @@
                         />
                     )}
                     {isImportVentasModalOpen && (
-                    <ImportVentasModal 
-                        onClose={() => setIsImportVentasModalOpen(false)} 
-                        onSuccess={() => forceRerender('dashboard')} 
-                    />
-                )}
-            </React.Fragment>
-          );
+                        <ImportVentasModal 
+                            onClose={() => { setIsImportVentasModalOpen(false); forceRerender('dashboard'); }} 
+                        />
+                    )}
+                </React.Fragment>
+            );
+        }
         
         ReactDOM.render(<App />, document.getElementById('root'));
     </script>
