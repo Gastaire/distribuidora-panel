@@ -1198,19 +1198,28 @@
             );
         };
 
-        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm }) => {
+        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal }) => {
             const isAdmin = user.rol === 'admin';
+            
             const renderContent = () => {
                 switch (currentPage) {
-                    case 'pedidos': return <PedidosView onSelectPedido={onShowPedido} user={user} />; // <--- CORRECCIÓN: Se pasa 'user'
-                    case 'productos': return <ProductosView user={user} onShowProductoForm={onShowProductoForm} onShowImportModal={onShowImportModal} />;
-                    case 'clientes': return <ClientesView user={user} onShowClienteForm={onShowClienteForm} />;
-                    case 'usuarios': return <UsuariosView onShowUsuarioForm={onShowUsuarioForm} />;
-                    case 'actividad': return <ActividadView />;
-                    case 'dashboard': return <DashboardView />; 
-                    default: return <DashboardView />;
+                    case 'pedidos': 
+                        return <PedidosView onSelectPedido={onShowPedido} user={user} />;
+                    case 'productos': 
+                        return <ProductosView user={user} onShowProductoForm={onShowProductoForm} onShowImportModal={onShowImportModal} />;
+                    case 'clientes': 
+                        return <ClientesView user={user} onShowClienteForm={onShowClienteForm} />;
+                    case 'usuarios': 
+                        return <UsuariosView onShowUsuarioForm={onShowUsuarioForm} />;
+                    case 'actividad': 
+                        return <ActividadView />;
+                    case 'dashboard': 
+                    default:
+                        // ✅ CORRECCIÓN: Ahora pasamos la función onShowImportVentasModal a DashboardView
+                        return <DashboardView onShowImportVentasModal={onShowImportVentasModal} />;
                 }
             };
+
             return (
                 <div className="flex h-screen bg-gray-100 font-sans">
                     <aside className="w-64 bg-gray-800 text-white flex flex-col shrink-0">
