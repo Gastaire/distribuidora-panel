@@ -584,6 +584,8 @@
             const [productSearch, setProductSearch] = React.useState('');
             const [logs, setLogs] = React.useState([]);
             const [showLogs, setShowLogs] = React.useState(false);
+            const [notas, setNotas] = React.useState('');
+            const [guardandoNotas, setGuardandoNotas] = React.useState(false);
             const token = localStorage.getItem('token');
             
             const [integrityIssues, setIntegrityIssues] = React.useState([]);
@@ -631,6 +633,24 @@
                     setShowLogs(true);
                 } catch (err) {
                     alert("Error al cargar los logs.");
+                }
+            };
+
+            const handleGuardarNotas = async () => {
+                setGuardandoNotas(true);
+                try {
+                    const response = await fetch(`${API_URL}/pedidos/${pedidoId}/notas`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ notas_entrega: notas })
+                    });
+                    if (!response.ok) throw new Error('Error al guardar la nota.');
+                    const pedidoActualizado = await response.json();
+                    setPedido(pedidoActualizado); // Actualiza el pedido con la nueva nota
+                } catch(err) {
+                    alert(err.message);
+                } finally {
+                    setGuardandoNotas(false);
                 }
             };
             
@@ -749,6 +769,25 @@
                                             </select>
                                         </div>
                                     )}
+                                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mt-6">
+                                        <h3 className="font-bold text-gray-800 mb-2">Notas del Vendedor (Editable)</h3>
+                                        <textarea 
+                                            value={notas} 
+                                            onChange={(e) => setNotas(e.target.value)}
+                                            rows="3" 
+                                            className="w-full p-2 border rounded-md" 
+                                            placeholder="No hay notas para este pedido..."
+                                        ></textarea>
+                                        <button 
+                                            onClick={handleGuardarNotas} 
+                                            disabled={guardandoNotas}
+                                            className="mt-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded-lg text-sm disabled:bg-gray-400"
+                                        >
+                                            {guardandoNotas ? 'Guardando...' : 'Guardar Nota'}
+                                        </button>
+                                    </div>
+
+                                    {(isAdmin || isDeposito) && !isEditing && (<div className="bg-gray-50 p-4 rounded-lg mt-4"><h3 className="font-bold text-gray-800 mb-3">Actualizar Estado</h3><select onChange={(e) => handleUpdateStatus(e.target.value)} value={pedido.estado} className="w-full p-2 border rounded-md">{Object.entries(isAdmin ? estadosAdmin : estadosDeposito).map(([key, value]) => <option key={key} value={key}>{value}</option>)}</select></div>)}
                                 </div>
                             )}
                         </div>
