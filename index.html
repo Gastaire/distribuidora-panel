@@ -11,13 +11,43 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @media print {
-            body * { visibility: hidden; }
-            .printable-area, .printable-area * { visibility: visible; }
-            .printable-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; font-size: 11pt; display: flex; flex-direction: column; }
-            .printable-area .print-body { flex-grow: 1; }
-            .printable-area .print-footer { flex-shrink: 0; margin-top: auto; }
-            .printable-area table tr { border-bottom: 1px solid #ccc; }
-            @page { size: A4; margin: 10mm; }
+            body * {
+                visibility: hidden;
+            }
+            .printable-area, .printable-area * {
+                visibility: visible;
+            }
+            .printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            .printable-area .print-body {
+                flex-grow: 1;
+            }
+            .printable-area .print-footer {
+                flex-shrink: 0;
+                margin-top: auto;
+            }
+            
+            /* Estilos para la impresión A4 normal */
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            /* Estilos para la impresión de armado (A5 Apaisado) */
+            @page assembly-page {
+                size: A5 landscape;
+                margin: 8mm;
+            }
+            #printableAreaAssembly {
+                page: assembly-page;
+            }
         }
     </style>
 </head>
@@ -558,12 +588,12 @@
                     <h1 className="text-3xl font-bold text-gray-800 mb-6">Registro de Actividad</h1>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         {loading ? <p className="p-4">Cargando...</p> : (
-                            <ul className="divide-y divide-gray-200">
+                            <ul className="divide-y divide-gray-200 max-h-[75vh] overflow-y-auto">
                                 {logs.map(log => (
-                                    <li key={log.id} className="p-4">
-                                        <p><span className="font-bold">{log.nombre_usuario}</span> {log.accion.toLowerCase().replace(/_/g, ' ')}</p>
-                                        <p className="text-sm text-gray-600">{log.detalle}</p>
-                                        <p className="text-xs text-gray-400 mt-1">{new Date(log.fecha_creacion).toLocaleString()}</p>
+                                    <li key={log.id} className="p-4 hover:bg-gray-50">
+                                        <p className="text-sm"><span className="font-bold">{log.nombre_usuario}</span> {log.accion.toLowerCase().replace(/_/g, ' ')}</p>
+                                        <p className="text-gray-600 whitespace-pre-wrap">{log.detalle}</p>
+                                        <p className="text-xs text-gray-400 mt-1 text-right">{new Date(log.fecha_creacion).toLocaleString()}</p>
                                     </li>
                                 ))}
                             </ul>
@@ -573,6 +603,35 @@
             );
         };
         
+        // --- Nuevo Componente para mostrar Logs ---
+        const LogModal = ({ logs, onClose }) => {
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h2 className="text-xl font-bold text-gray-800">Historial del Pedido</h2>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button>
+                        </div>
+                        <div className="p-6 overflow-y-auto">
+                            {logs.length > 0 ? (
+                                <ul className="divide-y divide-gray-200">
+                                    {logs.map(log => (
+                                        <li key={log.id} className="py-3">
+                                            <p className="text-sm"><span className="font-semibold">{log.nombre_usuario}</span> {log.accion.toLowerCase().replace(/_/g, ' ')}</p>
+                                            <p className="text-gray-600 text-sm whitespace-pre-wrap">{log.detalle}</p>
+                                            <p className="text-xs text-gray-400 text-right">{new Date(log.fecha_creacion).toLocaleString()}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-gray-500 text-center py-8">No hay un historial de actividad específico para este pedido.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const PedidoDetailModal = ({ pedidoId, onClose, user, onUpdate }) => {
             const [pedido, setPedido] = React.useState(null);
             const [loading, setLoading] = React.useState(true);
@@ -582,7 +641,7 @@
             const [allProducts, setAllProducts] = React.useState([]);
             const [productSearch, setProductSearch] = React.useState('');
             const [logs, setLogs] = React.useState([]);
-            const [showLogs, setShowLogs] = React.useState(false);
+            const [showLogs, setShowLogs] = React.useState(false); // <-- Controla el modal de logs
             const [integrityIssues, setIntegrityIssues] = React.useState([]);
             
             const [notasEditables, setNotasEditables] = React.useState('');
@@ -628,12 +687,12 @@
                 fetchAllData();
             }, [fetchAllData]);
         
-            const fetchLogs = async () => {
+            const handleShowLogs = async () => {
                 try {
                     const response = await fetch(`${API_URL}/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
                     const allLogs = await response.json();
                     setLogs(allLogs.filter(log => log.detalle && log.detalle.includes(`#${pedidoId}`)));
-                    setShowLogs(true);
+                    setShowLogs(true); // <-- Abre el modal
                 } catch (err) { alert("Error al cargar los logs."); }
             };
         
@@ -689,14 +748,14 @@
                 }
             };
         
-            const handlePrint = (printType) => {
-                const printArea = document.getElementById(printType);
-                const originalVis = document.body.style.visibility;
-                document.body.style.visibility = 'hidden';
-                printArea.style.display = 'block';
+            const handlePrint = (printAreaId) => {
+                const printContent = document.getElementById(printAreaId);
+                const originalContents = document.body.innerHTML;
+                document.body.innerHTML = printContent.innerHTML;
                 window.print();
-                printArea.style.display = 'none';
-                document.body.style.visibility = originalVis;
+                document.body.innerHTML = originalContents;
+                // Recargar el componente App para restaurar los event listeners
+                ReactDOM.render(<App />, document.getElementById('root'));
             };
         
             const totalPedido = (pedido && editableItems) ? editableItems.reduce((acc, item) => acc + (item.cantidad * item.precio_congelado), 0) : 0;
@@ -712,7 +771,7 @@
                             <div className="flex justify-between items-center p-4 border-b">
                                 <h2 className="text-xl font-bold text-gray-800">Detalle del Pedido #{pedidoId}</h2>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={fetchLogs} className="relative flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm"><HistoryIcon className="h-5 w-5"/>Logs{integrityIssues.length > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 border-2 border-white"></span>}</button>
+                                    <button onClick={handleShowLogs} className="relative flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm"><HistoryIcon className="h-5 w-5"/>Logs{integrityIssues.length > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 border-2 border-white"></span>}</button>
                                     <button onClick={() => handlePrint('printableAreaAssembly')} className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-lg text-sm"><CheckSquareIcon className="h-5 w-5"/>P/ Armar</button>
                                     <button onClick={() => handlePrint('printableArea')} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg text-sm"><PrintIcon className="h-5 w-5"/>Imprimir</button>
                                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2"><CloseIcon/></button>
@@ -766,11 +825,13 @@
                             )}
                         </div>
                     </div>
+                    {/* --- Modales y Vistas de Impresión --- */}
+                    {showLogs && <LogModal logs={logs} onClose={() => setShowLogs(false)} />}
                     {pedido && (
-                        <React.Fragment>
-                            <PrintableView pedido={pedido} total={totalPedido} notasParaImprimir={notasEditables} />
-                            <PrintForAssemblyView pedido={pedido} />
-                        </React.Fragment>
+                        <div className="hidden">
+                           <PrintableView pedido={pedido} total={totalPedido} notasParaImprimir={notasEditables} />
+                           <PrintForAssemblyView pedido={pedido} />
+                        </div>
                     )}
                 </React.Fragment>
             );
@@ -780,9 +841,9 @@
             const formatNumber = (num) => parseFloat(Number(num).toFixed(3));
         
             return (
-                <div id="printableArea" className="printable-area hidden font-sans text-black bg-white">
+                <div id="printableArea" className="printable-area font-sans text-black bg-white" style={{fontSize: '11pt'}}>
                     <div className="print-header">
-                        <div className="flex justify-between items-start text-sm mb-4">
+                        <div className="flex justify-between items-start mb-4">
                             <div className="w-1/3"><h1 className="text-lg font-bold">Mayorista Comestibles</h1></div>
                             <div className="w-1/3 px-2 text-center"><h2 className="font-bold underline">Datos del Cliente</h2><p>{pedido.nombre_comercio}</p><p className="text-xs">{pedido.direccion}</p></div>
                             <div className="w-1/3 text-right"><p><span className="font-bold">Pedido N°:</span> {pedido.id}</p><p><span className="font-bold">Fecha:</span> {new Date(pedido.fecha_creacion).toLocaleDateString()}</p></div>
@@ -809,11 +870,7 @@
                                     </tr>
                                 ))}
                             </tbody>
-                        </table>
-                    </div>
-                    <div className="print-footer flex gap-4 pt-4 mt-auto">
-                        <table className="w-full">
-                            <tfoot>
+                             <tfoot>
                                 <tr>
                                     <td colSpan="3" className="font-bold text-right p-2 border-t-4 border-black">Total:</td>
                                     <td className="font-bold text-right p-2 border-t-4 border-black">${formatNumber(total)}</td>
@@ -838,29 +895,29 @@
         const PrintForAssemblyView = ({ pedido }) => {
             const formatNumber = (num) => parseFloat(Number(num).toFixed(3));
             return (
-                <div id="printableAreaAssembly" className="printable-area hidden font-sans text-black bg-white" style={{ fontSize: '10pt' }}>
-                    <div className="print-header flex justify-between items-center border-b-2 border-black pb-2 mb-4">
-                        <h1 className="text-lg font-bold">Hoja de Armado de Pedido</h1>
+                <div id="printableAreaAssembly" className="printable-area font-sans text-black bg-white" style={{ fontSize: '9pt' }}>
+                    <div className="print-header flex justify-between items-center border-b-2 border-black pb-1 mb-2">
+                        <h1 className="text-base font-bold">Hoja de Armado</h1>
                         <div>
-                            <p className="font-semibold">{pedido.nombre_comercio}</p>
-                            <p className="text-sm">Pedido N°: <span className="font-bold">{pedido.id}</span></p>
+                            <p className="font-semibold text-sm">{pedido.nombre_comercio}</p>
+                            <p className="text-xs">Pedido N°: <span className="font-bold">{pedido.id}</span></p>
                         </div>
                     </div>
                     <div className="print-body">
                         <table className="w-full">
                             <thead>
                                 <tr>
-                                    <th className="border-b-2 border-black p-1 text-center w-16">Listo</th>
-                                    <th className="border-b-2 border-black p-1 text-center w-24">Cantidad</th>
-                                    <th className="border-b-2 border-black p-1 text-left">Producto</th>
+                                    <th className="border-b border-black p-1 text-center w-12">OK</th>
+                                    <th className="border-b border-black p-1 text-center w-16">Cant.</th>
+                                    <th className="border-b border-black p-1 text-left">Producto</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {pedido.items.map(item => (
                                     <tr key={item.id} className="border-b border-gray-300">
-                                        <td className="p-2 text-center"><input type="checkbox" style={{ width: '20px', height: '20px' }} /></td>
-                                        <td className="p-2 text-center font-bold text-lg">{formatNumber(item.cantidad)}</td>
-                                        <td className="p-2">{item.nombre_producto}</td>
+                                        <td className="p-1 text-center"><div className="w-5 h-5 border border-black mx-auto"></div></td>
+                                        <td className="p-1 text-center font-bold text-base">{formatNumber(item.cantidad)}</td>
+                                        <td className="p-1">{item.nombre_producto}</td>
                                     </tr>
                                 ))}
                             </tbody>
