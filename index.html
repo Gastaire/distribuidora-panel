@@ -641,7 +641,9 @@
                 try {
                     const response = await fetch(`${API_URL}/pedidos/${pedidoId}/estado`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ estado: nuevoEstado }) });
                     if (!response.ok) throw new Error('Error al actualizar estado.');
-                    onClose(); onUpdate();
+                    // En lugar de cerrar, recargamos los datos del pedido
+                    fetchAllData(); 
+                    onUpdate(); // Mantenemos onUpdate para refrescar la lista de fondo si es necesario
                 } catch(err) { alert(err.message); }
             };
             
@@ -665,7 +667,10 @@
                 try {
                     const response = await fetch(`${API_URL}/pedidos/${pedidoId}/items`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ items: itemsToSave }) });
                     if (!response.ok) throw new Error('Error al guardar los cambios.');
-                    setIsEditing(false); onClose(); onUpdate();
+                    setIsEditing(false);
+                    // En lugar de cerrar, recargamos los datos
+                    fetchAllData();
+                    onUpdate(); // Mantenemos onUpdate para refrescar la lista de fondo
                 } catch (err) { alert(err.message); }
             };
             
@@ -738,7 +743,7 @@
                                                 {isEditing && <td className="px-4 py-2 text-right"><button onClick={() => handleRemoveItem(item.id || item.producto_id)} className="text-red-500 hover:text-red-700"><TrashIcon className="h-5 w-5"/></button></td>}
                                             </tr>))}
                                             </tbody>
-                                            {isEditing && <tbody><tr><td colSpan="4" className="p-2 relative"><input type="text" value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Buscar producto para agregar..." className="w-full p-2 border rounded-md"/>{productSearch && (<div className="absolute bg-white border shadow-lg max-h-48 overflow-y-auto w-full left-0 z-10">{filteredProductsToAdd.map(p => <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-gray-100 cursor-pointer">{p.nombre}</div>)}</div>)}</td></tr></tbody>}
+                                            {isEditing && (<tbody><tr><td colSpan="4" className="p-2 relative"><input type="text" value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Buscar producto para agregar..." className="w-full p-2 border rounded-md"/>{productSearch && ( <div className="absolute bg-white border shadow-lg max-h-48 overflow-y-auto w-full left-0 z-20 rounded-b-md"> {filteredProductsToAdd.length > 0 ? (filteredProductsToAdd.map(p => (<div key={p.id} onClick={() => handleAddItem(p)} className="p-3 hover:bg-blue-50 cursor-pointer text-sm">{p.nombre}</div>))) : (<div className="p-3 text-sm text-gray-500">No se encontraron productos.</div>)}</div>)}</td></tr></tbody>)}
                                             {!isEditing && <tfoot className="bg-gray-50 font-bold"><tr><td colSpan="2" className="px-4 py-2 text-right">Total:</td><td className="px-4 py-2 text-right">${totalPedido.toFixed(2)}</td></tr></tfoot>}
                                         </table>
                                     </div>
@@ -1428,3 +1433,4 @@
     </script>
 </body>
 </html>
+
