@@ -1004,23 +1004,23 @@
             const formatNumber = (num) => parseFloat(Number(num).toFixed(3));
         
             return (
-                <div id="printableArea" className="printable-area hidden font-sans text-black bg-white">
+                <div id="printableArea" className="printable-area hidden font-sans text-gray-700 bg-white">
                     <div className="print-header">
                         <div className="flex justify-between items-start text-sm mb-4">
                             <div className="w-1/3"><h1 className="text-lg font-bold">Mayorista Comestibles</h1></div>
                             <div className="w-1/3 px-2 text-center"><h2 className="font-bold underline">Datos del Cliente</h2><p>{pedido.nombre_comercio}</p><p className="text-xs">{pedido.direccion}</p></div>
                             <div className="w-1/3 text-right"><p><span className="font-bold">Pedido N°:</span> {pedido.id}</p><p><span className="font-bold">Fecha:</span> {new Date(pedido.fecha_creacion).toLocaleDateString()}</p></div>
                         </div>
-                        <hr className="border-black my-2"/>
+                        <hr className="border-gray-600 my-2"/>
                     </div>
                     <div className="print-body flex-grow py-4">
                         <table className="w-full text-left border-collapse mb-4 text-[10pt]">
                             <thead>
                                 <tr>
-                                    <th className="border-b-2 border-black p-1 text-center">Cant.</th>
-                                    <th className="border-b-2 border-black p-1">Producto</th>
-                                    <th className="border-b-2 border-black p-1 text-right">P. Unit</th>
-                                    <th className="border-b-2 border-black p-1 text-right">Subtotal</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-center">Cant.</th>
+                                    <th className="border-b-2 border-gray-600 p-1">Producto</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-right">P. Unit</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-right">Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1039,31 +1039,31 @@
                         <table className="w-full">
                             <tfoot>
                                 <tr>
-                                    <td colSpan="3" className="font-bold text-right p-2 border-t-4 border-black">Total:</td>
-                                    <td className="font-bold text-right p-2 border-t-4 border-black">${formatNumber(total)}</td>
+                                    <td colSpan="3" className="font-bold text-right p-2 border-t-4 border-gray-600">Total:</td>
+                                    <td className="font-bold text-right p-2 border-t-4 border-gray-600">${formatNumber(total)}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-                     <div className="print-footer flex gap-4 pt-4 mt-auto">
+                    <div className="print-footer flex gap-4 pt-4 mt-auto">
                         <div style={{ width: '80%' }}>
                             <h3 className="font-bold mb-1 text-sm">Notas:</h3>
-                            <div className="border border-black h-24 p-1">{notasParaImprimir}</div>
+                            <div className="border border-gray-600 h-24 p-1">{notasParaImprimir}</div>
                         </div>
                         <div style={{ width: '20%' }} className="flex flex-col justify-end">
-                            <div className="border-b-2 border-black mt-12 mb-1"></div>
+                            <div className="border-b-2 border-gray-600 mt-12 mb-1"></div>
                             <p className="text-xs text-center">Firma de Conformidad</p>
                         </div>
                     </div>
                 </div>
             );
-        };     
-                
+        };
+        
         const PrintForAssemblyView = ({ pedido }) => {
             const formatNumber = (num) => parseFloat(Number(num).toFixed(3));
             return (
-                <div id="printableAreaAssembly" className="printable-area hidden font-sans text-black bg-white" style={{ fontSize: '10pt' }}>
-                    <div className="print-header flex justify-between items-center border-b-2 border-black pb-2 mb-4">
+                <div id="printableAreaAssembly" className="printable-area hidden font-sans text-gray-700 bg-white" style={{ fontSize: '10pt' }}>
+                    <div className="print-header flex justify-between items-center border-b-2 border-gray-600 pb-2 mb-4">
                         <h1 className="text-lg font-bold">Hoja de Armado de Pedido</h1>
                         <div>
                             <p className="font-semibold">{pedido.nombre_comercio}</p>
@@ -1074,9 +1074,9 @@
                         <table className="w-full">
                             <thead>
                                 <tr>
-                                    <th className="border-b-2 border-black p-1 text-center w-16">Listo</th>
-                                    <th className="border-b-2 border-black p-1 text-center w-24">Cantidad</th>
-                                    <th className="border-b-2 border-black p-1 text-left">Producto</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-center w-16">Listo</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-center w-24">Cantidad</th>
+                                    <th className="border-b-2 border-gray-600 p-1 text-left">Producto</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1652,6 +1652,7 @@
     </script>
 </body>
 </html>
+
 
 
 
