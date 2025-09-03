@@ -1608,7 +1608,7 @@
             );
         };
 
-        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal }) => {
+        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal, productos, loadingProductos, errorProductos, fetchProductos }) => {
             const isAdmin = user.rol === 'admin';
             
             const renderContent = () => {
@@ -1659,8 +1659,7 @@
             );
         };
 
-       function App() {
-            function App() {
+        function App() {
             const [currentPage, setCurrentPage] = React.useState('dashboard');
             const [token, setToken] = React.useState(localStorage.getItem('token'));
             const [user, setUser] = React.useState(JSON.parse(localStorage.getItem('user')));
@@ -1722,11 +1721,15 @@
             }, []);
 
             const forceRerender = (page) => {
-                if (page === 'productos') {
-                    fetchProductos(); // Forzamos la recarga de productos
+                const currentPageToRefresh = page || currentPage;
+                // Si la página es 'productos', la función fetchProductos se encargará.
+                if (currentPageToRefresh !== 'productos') {
+                    // Forzar un re-renderizado para otras páginas cambiando temporalmente la página
+                    setCurrentPage('');
+                    setTimeout(() => setCurrentPage(currentPageToRefresh), 0);
+                } else {
+                    fetchProductos();
                 }
-                setCurrentPage('');
-                setTimeout(() => setCurrentPage(page), 0);
             };
 
             const allCategories = React.useMemo(() => 
@@ -1767,6 +1770,10 @@
                         onShowImportModal={() => setIsImportModalOpen(true)}
                         onShowUsuarioForm={setEditingUsuario}
                         onShowImportVentasModal={() => setIsImportVentasModalOpen(true)}
+                        productos={productos}
+                        loadingProductos={loadingProductos}
+                        errorProductos={errorProductos}
+                        fetchProductos={fetchProductos}
                     />
                     {viewingPedidoId && (
                         <PedidoDetailModal
@@ -1817,10 +1824,6 @@
     </script>
 </body>
 </html>
-
-
-
-
 
 
 
