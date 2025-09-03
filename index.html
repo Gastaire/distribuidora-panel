@@ -1745,11 +1745,6 @@
                 setEditingUsuario(null);
             }, []);
         
-            const forceRerender = (page) => {
-                setCurrentPage('');
-                setTimeout(() => setCurrentPage(page), 0);
-            };
-        
             if (!token || !user) {
                 return <LoginPage onLogin={handleLogin} loading={loading} error={error} />;
             }
@@ -1822,6 +1817,7 @@
     </script>
 </body>
 </html>
+
 
 
 
