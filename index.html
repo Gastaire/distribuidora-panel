@@ -545,33 +545,38 @@
                 doc.setTextColor(100);
                 doc.text(`Generado el: ${new Date().toLocaleDateString('es-AR')} a las ${new Date().toLocaleTimeString('es-AR')}`, 14, 29);
                 
-                let y = 40; // Posición inicial para la primera tabla
+                let startY = 40; // Posición inicial para la primera tabla
 
                 for (const category of sortedCategories) {
                     const productsInCategory = groupedProducts[category];
                     const tableColumn = ["SKU", "Nombre", "Precio"];
                     const tableRows = productsInCategory.map(p => [ p.codigo_sku || '-', p.nombre, `$${p.precio_unitario}` ]);
 
+                    // Si el contenido va a salirse de la página, creamos una nueva.
+                    // Estimamos la altura de la tabla antes de dibujarla.
+                    const estimatedHeight = (tableRows.length + 2) * 5 + 15; // Cálculo aproximado
+                    if (startY + estimatedHeight > 280) {
+                        doc.addPage();
+                        startY = 20;
+                    }
+
                     doc.setFontSize(14);
                     doc.setFont(undefined, 'bold');
-                    doc.text(category, 14, y);
-                    y += 7;
-
+                    doc.text(category, 14, startY);
+                    
                     doc.autoTable({
                         head: [tableColumn],
                         body: tableRows,
-                        startY: y,
+                        startY: startY + 7, // Dejamos espacio después del título de la categoría
                         theme: 'grid',
                         headStyles: { fillColor: [22, 160, 133] },
                         styles: { fontSize: 9 },
+                        // --- ESTA ES LA CORRECCIÓN ---
+                        // Usamos didDrawPage para obtener la posición final de forma segura
+                        didDrawPage: (data) => {
+                            startY = data.cursor.y + 15; // Actualizamos la posición para la siguiente tabla
+                        }
                     });
-
-                    y = doc.autoTable.previous.finalY + 15;
-
-                    if (y > 260) { // Si la siguiente tabla no cabe, crear nueva página
-                        doc.addPage();
-                        y = 20;
-                    }
                 }
                 
                 doc.save(`catalogo-productos-${new Date().toISOString().slice(0,10)}.pdf`);
@@ -593,14 +598,16 @@
 
             return (
                 <div>
-                    <div className="flex justify-between items-center mb-6 gap-4">
-                        <h1 className="text-3xl font-bold text-gray-800">Gestión de Productos</h1>
-                        <input type="text" placeholder="Buscar por nombre o SKU..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
-                        <div className="flex gap-2">
-                            {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
-                            <button onClick={handleExportCsv} className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><DownloadIcon className="h-5 w-5 mr-2" /> Exportar CSV</button>
-                            {isAdmin && <button onClick={handleExportPdf} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><FileTextIcon className="h-5 w-5 mr-2" /> Exportar PDF</button>}
-                            {isAdmin && (<button onClick={() => onShowProductoForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Productos</h1>
+                        <div className="w-full flex flex-col sm:flex-row items-center gap-4">
+                            <input type="text" placeholder="Buscar por nombre o SKU..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-auto sm:flex-grow max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
+                            <div className="flex gap-2 flex-wrap justify-start">
+                                {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
+                                <button onClick={handleExportCsv} className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><DownloadIcon className="h-5 w-5 mr-2" /> Exportar CSV</button>
+                                {isAdmin && <button onClick={handleExportPdf} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><FileTextIcon className="h-5 w-5 mr-2" /> Exportar PDF</button>}
+                                {isAdmin && (<button onClick={() => onShowProductoForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
+                            </div>
                         </div>
                     </div>
                     
@@ -1201,6 +1208,80 @@
                 </div>
             );
         };
+
+        // --- NUEVO COMPONENTE: COMBOBOX PERSONALIZADO PARA CATEGORÍAS ---
+        const CategoryCombobox = ({ value, onChange, suggestions }) => {
+            const [inputValue, setInputValue] = React.useState(value || '');
+            const [isOpen, setIsOpen] = React.useState(false);
+            const wrapperRef = React.useRef(null);
+
+            // Sincroniza el valor interno si el prop externo cambia (ej: al editar otro producto)
+            React.useEffect(() => { setInputValue(value || ''); }, [value]);
+
+            // Cierra el desplegable si se hace clic fuera del componente
+            React.useEffect(() => {
+                function handleClickOutside(event) {
+                    if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                        setIsOpen(false);
+                    }
+                }
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, [wrapperRef]);
+
+            const handleInputChange = (e) => {
+                const newValue = e.target.value;
+                setInputValue(newValue);
+                if (!isOpen) setIsOpen(true);
+                // Llama a la función `onChange` del formulario principal para mantener el estado sincronizado
+                onChange({ target: { name: 'categoria', value: newValue } });
+            };
+
+            const handleSelectSuggestion = (selectedValue) => {
+                setInputValue(selectedValue);
+                setIsOpen(false);
+                onChange({ target: { name: 'categoria', value: selectedValue } });
+            };
+
+            const filteredSuggestions = suggestions.filter(
+                suggestion => suggestion.toLowerCase().includes(inputValue.toLowerCase())
+            );
+
+            return (
+                <div className="relative" ref={wrapperRef}>
+                    <label htmlFor="categoria-input" className="block text-sm font-medium text-gray-700">Categoría</label>
+                    <input
+                        type="text"
+                        id="categoria-input"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onFocus={() => setIsOpen(true)}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        autoComplete="off"
+                        placeholder="Buscar o crear categoría..."
+                    />
+                    {isOpen && (
+                        <div className="absolute z-20 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-auto">
+                            {filteredSuggestions.length > 0 ? (
+                                filteredSuggestions.map(suggestion => (
+                                    <div
+                                        key={suggestion}
+                                        onClick={() => handleSelectSuggestion(suggestion)}
+                                        className="cursor-pointer hover:bg-blue-500 hover:text-white p-2 text-sm"
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-2 text-sm text-gray-500">
+                                    {inputValue ? `Crear nueva: "${inputValue}"` : 'Escribe para buscar...'}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
         
         const ProductoFormModal = ({ producto, onClose, onSuccess, allCategories }) => {
             const [formData, setFormData] = React.useState({ codigo_sku: '', nombre: '', descripcion: '', precio_unitario: '', stock: 'Sí', imagen_url: '', categoria: '' });
@@ -1231,7 +1312,7 @@
                     onSuccess();
                 } catch (err) { setError(err.message); } finally { setLoading(false); }
             };
-            return (
+             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
                     <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b"><h2 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar Producto' : 'Agregar Producto'}</h2><button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon/></button></div>
@@ -1244,13 +1325,12 @@
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div><label htmlFor="codigo_sku" className="block text-sm font-medium text-gray-700">SKU (Código Interno)</label><input type="text" name="codigo_sku" id="codigo_sku" value={formData.codigo_sku} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" /></div>
-                                <div>
-                                    <label htmlFor="categoria" className="block text-sm font-medium text-gray-700">Categoría</label>
-                                    <input type="text" name="categoria" id="categoria" value={formData.categoria} onChange={handleChange} list="categorias-list" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" />
-                                    <datalist id="categorias-list">
-                                        {allCategories.map(cat => <option key={cat} value={cat} />)}
-                                    </datalist>
-                                </div>
+                                {/* --- REEMPLAZO DEL CAMPO DE CATEGORÍA --- */}
+                                <CategoryCombobox 
+                                    value={formData.categoria}
+                                    onChange={handleChange}
+                                    suggestions={allCategories}
+                                />
                             </div>
                             <div><label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">Descripción</label><textarea name="descripcion" id="descripcion" rows="3" value={formData.descripcion} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"></textarea></div>
                         </div>
@@ -1824,6 +1904,7 @@
     </script>
 </body>
 </html>
+
 
 
 
