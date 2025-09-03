@@ -1748,6 +1748,7 @@
             
             // --- ESTADOS DE DATOS GLOBALES ---
             const [productos, setProductos] = React.useState([]);
+            const [categorias, setCategorias] = React.useState([]); // <-- NUEVO ESTADO
             const [loadingProductos, setLoadingProductos] = React.useState(true);
             const [errorProductos, setErrorProductos] = React.useState(null);
             
@@ -1757,6 +1758,10 @@
             const [editingUsuario, setEditingUsuario] = React.useState(null);
             const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);
             const [isImportVentasModalOpen, setIsImportVentasModalOpen] = React.useState(false);
+            
+            // --- NUEVOS ESTADOS PARA GESTIÓN DE CATEGORÍAS ---
+            const [renamingCategory, setRenamingCategory] = React.useState(null);
+            const [managingCategory, setManagingCategory] = React.useState(null);
 
             const fetchProductos = React.useCallback(async () => {
                 if (!token) return;
@@ -1765,7 +1770,11 @@
                 try {
                     const response = await fetch(`${API_URL}/productos`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!response.ok) throw new Error('No se pudo obtener la lista de productos.');
-                    setProductos(await response.json());
+                    // --- LÓGICA ACTUALIZADA ---
+                    // La API ahora devuelve un objeto con dos listas.
+                    const data = await response.json();
+                    setProductos(data.productos);
+                    setCategorias(data.categorias);
                 } catch (err) { 
                     setErrorProductos(err.message); 
                 } finally { 
@@ -1800,23 +1809,6 @@
                 }
             }, []);
 
-            const forceRerender = (page) => {
-                const currentPageToRefresh = page || currentPage;
-                // Si la página es 'productos', la función fetchProductos se encargará.
-                if (currentPageToRefresh !== 'productos') {
-                    // Forzar un re-renderizado para otras páginas cambiando temporalmente la página
-                    setCurrentPage('');
-                    setTimeout(() => setCurrentPage(currentPageToRefresh), 0);
-                } else {
-                    fetchProductos();
-                }
-            };
-
-            const allCategories = React.useMemo(() => 
-                [...new Set(productos.map(p => p.categoria).filter(Boolean).sort())],
-                [productos]
-            );
-        
             const handleLogout = React.useCallback(() => {
                 localStorage.removeItem('token'); 
                 localStorage.removeItem('user');
@@ -1827,6 +1819,15 @@
                 setEditingCliente(null); 
                 setEditingUsuario(null);
             }, []);
+        
+            const forceRerender = (page) => {
+                // Si la página es de productos o categorías, refrescamos los datos.
+                if (page === 'productos' || page === 'categorias') {
+                    fetchProductos();
+                }
+                setCurrentPage('');
+                setTimeout(() => setCurrentPage(page), 0);
+            };
         
             if (!token || !user) {
                 return <LoginPage onLogin={handleLogin} loading={loading} error={error} />;
@@ -1868,7 +1869,7 @@
                             producto={editingProducto}
                             onClose={() => setEditingProducto(null)}
                             onSuccess={() => { setEditingProducto(null); fetchProductos(); }}
-                            allCategories={allCategories}
+                            allCategories={categorias} // <-- USAR NUEVO ESTADO
                         />
                     )}
                     {editingCliente !== null && (
@@ -1904,6 +1905,7 @@
     </script>
 </body>
 </html>
+
 
 
 
