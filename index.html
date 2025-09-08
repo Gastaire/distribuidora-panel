@@ -2234,30 +2234,6 @@
                 }
             }, []);
 
-            const fetchProductosWithCategorias = React.useCallback(async () => {
-                if (!token) return;
-                setLoadingProductos(true);
-                setErrorProductos(null);
-                try {
-                    // Usamos el nuevo endpoint que devuelve productos y categorías
-                    const response = await fetch(`${API_URL}/productos?format=full`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (!response.ok) throw new Error('No se pudo obtener la lista de productos y categorías.');
-                    const data = await response.json();
-                    setProductos(data.productos);
-                    setAllCategories(data.categorias); // Guardamos las categorías en su propio estado
-                } catch (err) { 
-                    setErrorProductos(err.message); 
-                } finally { 
-                    setLoadingProductos(false); 
-                }
-            }, [token]);
-
-            React.useEffect(() => {
-                if (token) {
-                    fetchProductosWithCategorias();
-                }
-            }, [token, fetchProductosWithCategorias]);
-
             const handleLogout = React.useCallback(() => {
                 localStorage.removeItem('token'); 
                 localStorage.removeItem('user');
@@ -2271,7 +2247,7 @@
         
             const forceRerender = (page) => {
                 // Si la página es de productos o categorías, refrescamos los datos.
-                if (page === 'productos' || page === 'categorias') {
+                if (page === 'productos' || page === 'categorias' || page === 'dashboard') {
                     fetchProductos();
                 }
                 setCurrentPage('');
@@ -2376,6 +2352,7 @@
     </script>
 </body>
 </html>
+
 
 
 
