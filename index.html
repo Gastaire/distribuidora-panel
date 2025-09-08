@@ -2146,26 +2146,22 @@
                 
                 setLoadingProductos(true);
                 setErrorProductos(null);
-                setCategoryActionLoading(true); // Añadimos el estado de carga para categorías
+                // No necesitamos un estado de carga separado para categorías, usamos el de productos.
                 
                 try {
-                    // --- CORRECCIÓN: Añadimos el parámetro ?format=full a la URL ---
                     const response = await fetch(`${API_URL}/productos?format=full`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     
-                    if (!response.ok) throw new Error('No se pudo obtener la lista de productos.');
+                    if (!response.ok) throw new Error('No se pudo obtener la lista de productos y categorías.');
                     
-                    // La API ahora devuelve un objeto con dos listas
                     const data = await response.json();
                     setProductos(data.productos);
                     setCategorias(data.categorias);
                 } catch (err) {
-                    setErrorProductos(err.message); // Error para productos
-                    setCategoryActionError(err.message); // Error para categorías
+                    setErrorProductos(err.message);
                 } finally {
-                    setLoadingProductos(false); // Finalizamos el estado de carga de productos
-                    setCategoryActionLoading(false); // Finalizamos el estado de carga de categorías
+                    setLoadingProductos(false);
                 }
             }, [token]);
 
@@ -2187,8 +2183,8 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Error al renombrar la categoría.');
                     
-                    setRenamingCategory(null); // Cierra el modal
-                    fetchProductos(); // Refresca toda la data
+                    setRenamingCategory(null);
+                    fetchProductos();
                 } catch (err) {
                     setCategoryActionError(err.message);
                 } finally {
@@ -2208,8 +2204,8 @@
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message || 'Error al guardar los productos de la categoría.');
                     
-                    setManagingCategory(null); // Cierra el modal
-                    fetchProductos(); // Refresca toda la data
+                    setManagingCategory(null);
+                    fetchProductos();
                 } catch (err) {
                     setCategoryActionError(err.message);
                 } finally {
@@ -2380,6 +2376,7 @@
     </script>
 </body>
 </html>
+
 
 
 
