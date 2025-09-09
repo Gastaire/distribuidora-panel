@@ -521,14 +521,13 @@
             );
         };
         
-        const ProductosView = ({ user, onShowProductoForm, onShowImportModal, productos, loading, error, onRefresh }) => {
+        const ProductosView = ({ user, onShowProductoForm, onShowImportModal, productos, loading, error, onRefresh, onShowPdfOptionsModal }) => {
             const [searchTerm, setSearchTerm] = React.useState('');
             const { items: sortedProductos, requestSort, sortConfig } = useSortableData(productos, { key: 'nombre', direction: 'ascending' });
             
             const handleExportCsv = () => {
                 const headers = "codigo_sku,nombre,categoria,precio_unitario,stock\n";
                 const csvContent = "data:text/csv;charset=utf-8," 
-                    + headers
                     + productos.map(p => `${p.codigo_sku || ''},"${p.nombre.replace(/"/g, '""')}",${p.categoria || ''},${p.precio_unitario},${p.stock}`).join("\n");
                 
                 const encodedUri = encodeURI(csvContent);
@@ -538,63 +537,6 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-            };
-
-            const handleExportPdf = () => {
-                const { jsPDF } = window.jspdf;
-                if (!jsPDF) { alert("Error: La librería jsPDF no está cargada."); return; }
-                const doc = new jsPDF();
-
-                const groupedProducts = productos.reduce((acc, product) => {
-                    const category = product.categoria || 'Sin Categoría';
-                    if (!acc[category]) acc[category] = [];
-                    acc[category].push(product);
-                    return acc;
-                }, {});
-
-                const sortedCategories = Object.keys(groupedProducts).sort();
-
-                doc.setFontSize(18);
-                doc.text("Catálogo de Productos", 14, 22);
-                doc.setFontSize(11);
-                doc.setTextColor(100);
-                doc.text(`Generado el: ${new Date().toLocaleDateString('es-AR')} a las ${new Date().toLocaleTimeString('es-AR')}`, 14, 29);
-                
-                let startY = 40; // Posición inicial para la primera tabla
-
-                for (const category of sortedCategories) {
-                    const productsInCategory = groupedProducts[category];
-                    const tableColumn = ["SKU", "Nombre", "Precio"];
-                    const tableRows = productsInCategory.map(p => [ p.codigo_sku || '-', p.nombre, `$${p.precio_unitario}` ]);
-
-                    // Si el contenido va a salirse de la página, creamos una nueva.
-                    // Estimamos la altura de la tabla antes de dibujarla.
-                    const estimatedHeight = (tableRows.length + 2) * 5 + 15; // Cálculo aproximado
-                    if (startY + estimatedHeight > 280) {
-                        doc.addPage();
-                        startY = 20;
-                    }
-
-                    doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold');
-                    doc.text(category, 14, startY);
-                    
-                    doc.autoTable({
-                        head: [tableColumn],
-                        body: tableRows,
-                        startY: startY + 7, // Dejamos espacio después del título de la categoría
-                        theme: 'grid',
-                        headStyles: { fillColor: [22, 160, 133] },
-                        styles: { fontSize: 9 },
-                        // --- ESTA ES LA CORRECCIÓN ---
-                        // Usamos didDrawPage para obtener la posición final de forma segura
-                        didDrawPage: (data) => {
-                            startY = data.cursor.y + 15; // Actualizamos la posición para la siguiente tabla
-                        }
-                    });
-                }
-                
-                doc.save(`catalogo-productos-${new Date().toISOString().slice(0,10)}.pdf`);
             };
 
             const handleDelete = async (productoId) => {
@@ -620,7 +562,7 @@
                             <div className="flex gap-2 flex-wrap justify-start">
                                 {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
                                 <button onClick={handleExportCsv} className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><DownloadIcon className="h-5 w-5 mr-2" /> Exportar CSV</button>
-                                {isAdmin && <button onClick={handleExportPdf} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><FileTextIcon className="h-5 w-5 mr-2" /> Exportar PDF</button>}
+                                {isAdmin && <button onClick={onShowPdfOptionsModal} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><FileTextIcon className="h-5 w-5 mr-2" /> Exportar PDF</button>}
                                 {isAdmin && (<button onClick={() => onShowProductoForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
                             </div>
                         </div>
@@ -1007,6 +949,94 @@
                             ))}
                         </tbody>
                     </table>
+                </div>
+            );
+        };
+
+        const PdfOptionsModal = ({ onClose, onGenerate, loading }) => {
+            const [options, setOptions] = React.useState({
+                format: 'price-list',
+                stock: 'in-stock',
+            });
+
+            const handleOptionChange = (type, value) => {
+                setOptions(prev => ({ ...prev, [type]: value }));
+            };
+
+            const handleSubmit = () => {
+                onGenerate(options);
+            };
+
+            const OptionButton = ({ label, description, value, type, selectedValue, onSelect, disabled = false }) => (
+                <button
+                    onClick={() => onSelect(type, value)}
+                    disabled={disabled}
+                    className={`text-left p-4 border rounded-lg w-full transition-all duration-200 ${selectedValue === value ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500' : 'bg-white hover:bg-gray-50'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                    <p className="font-bold text-gray-800">{label}</p>
+                    <p className="text-sm text-gray-500">{description}</p>
+                </button>
+            );
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h2 className="text-xl font-bold text-gray-800">Exportar a PDF</h2>
+                            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><CloseIcon /></button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-700 mb-2">1. Elige el formato</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <OptionButton 
+                                        label="Lista de Precios"
+                                        description="Un listado compacto, por categorías y en múltiples columnas. Ideal para imprimir."
+                                        value="price-list"
+                                        type="format"
+                                        selectedValue={options.format}
+                                        onSelect={handleOptionChange}
+                                    />
+                                    <OptionButton 
+                                        label="Catálogo con Fotos"
+                                        description="Muestra cada producto con su imagen. (Próximamente)"
+                                        value="catalog"
+                                        type="format"
+                                        selectedValue={options.format}
+                                        onSelect={handleOptionChange}
+                                        disabled={true}
+                                    />
+                                </div>
+                            </div>
+                             <div>
+                                <h3 className="text-lg font-semibold text-gray-700 mb-2">2. Elige qué productos incluir</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <OptionButton 
+                                        label="Sólo productos en Stock"
+                                        description="La lista contendrá únicamente productos marcados como 'Sí' en stock."
+                                        value="in-stock"
+                                        type="stock"
+                                        selectedValue={options.stock}
+                                        onSelect={handleOptionChange}
+                                    />
+                                    <OptionButton 
+                                        label="Todos los productos"
+                                        description="La lista contendrá todos los productos, sin importar su stock."
+                                        value="all"
+                                        type="stock"
+                                        selectedValue={options.stock}
+                                        onSelect={handleOptionChange}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t bg-gray-50 flex justify-end items-center gap-4">
+                            <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                            <button type="button" onClick={handleSubmit} disabled={loading} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg flex items-center">
+                                {loading ? <><Spinner className="mr-2"/>Generando...</> : 'Generar PDF'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             );
         };
@@ -2052,7 +2082,7 @@
             );
         };
 
-        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal, productos, categorias, loadingProductos, errorProductos, fetchProductos, onShowRenameModal, onShowManageModal }) => {
+        const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal, productos, categorias, loadingProductos, errorProductos, fetchProductos, onShowRenameModal, onShowManageModal, onShowPdfOptionsModal }) => {
             const isAdmin = user.rol === 'admin';
             
             const renderContent = () => {
@@ -2068,6 +2098,7 @@
                                     loading={loadingProductos}
                                     error={errorProductos}
                                     onRefresh={fetchProductos}
+                                    onShowPdfOptionsModal={onShowPdfOptionsModal}
                                 />;
                     case 'categorias':
                         return <CategoriasView
@@ -2134,6 +2165,8 @@
             const [editingUsuario, setEditingUsuario] = React.useState(null);
             const [isImportModalOpen, setIsImportModalOpen] = React.useState(false);
             const [isImportVentasModalOpen, setIsImportVentasModalOpen] = React.useState(false);
+            const [isPdfModalOpen, setIsPdfModalOpen] = React.useState(false);
+            const [pdfLoading, setPdfLoading] = React.useState(false);
             
             // --- NUEVOS ESTADOS PARA GESTIÓN DE CATEGORÍAS ---
             const [renamingCategory, setRenamingCategory] = React.useState(null);
@@ -2212,6 +2245,110 @@
                     setCategoryActionLoading(false);
                 }
             };
+
+            const generatePdf = (options) => {
+                setPdfLoading(true);
+                const { jsPDF } = window.jspdf;
+                if (!jsPDF) {
+                    alert("Error: La librería jsPDF no está cargada.");
+                    setPdfLoading(false);
+                    return;
+                }
+                
+                const doc = new jsPDF();
+                
+                // 1. Filtrar productos según las opciones
+                let productosFiltrados = [...productos];
+                if (options.stock === 'in-stock') {
+                    productosFiltrados = productosFiltrados.filter(p => p.stock === 'Sí');
+                }
+
+                // 2. Agrupar por categoría
+                const groupedProducts = productosFiltrados.reduce((acc, product) => {
+                    const category = product.categoria || 'Sin Categoría';
+                    if (!acc[category]) acc[category] = [];
+                    acc[category].push(product);
+                    return acc;
+                }, {});
+
+                const sortedCategories = Object.keys(groupedProducts).sort();
+
+                // 3. Diseño del PDF
+                // Encabezado general
+                doc.setFontSize(22);
+                doc.setFont(undefined, 'bold');
+                doc.text("Lista de Precios", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(100);
+                doc.text(`Generado por: ${user.nombre}`, 14, 30);
+                doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, doc.internal.pageSize.getWidth() - 14, 30, { align: 'right' });
+
+                let startY = 40;
+
+                // 4. Iterar y crear tablas por categoría (LÓGICA DE DOBLE COLUMNA)
+                for (const category of sortedCategories) {
+                    const productsInCategory = groupedProducts[category];
+                    
+                    // Dividir productos en dos columnas
+                    const midPoint = Math.ceil(productsInCategory.length / 2);
+                    const leftColumnProducts = productsInCategory.slice(0, midPoint);
+                    const rightColumnProducts = productsInCategory.slice(midPoint);
+                    
+                    const tableRows = [];
+                    for (let i = 0; i < midPoint; i++) {
+                        const leftProduct = leftColumnProducts[i];
+                        const rightProduct = rightColumnProducts[i]; // Puede ser undefined si la cantidad es impar
+                        
+                        tableRows.push([
+                            leftProduct.nombre,
+                            `$${parseFloat(leftProduct.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`,
+                            rightProduct ? rightProduct.nombre : '',
+                            rightProduct ? `$${parseFloat(rightProduct.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}` : ''
+                        ]);
+                    }
+
+                    // Título de la categoría
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(40);
+                    if (startY + 20 > 280) { 
+                        doc.addPage();
+                        startY = 20;
+                    }
+                    doc.text(category, 14, startY);
+
+                    // Dibujar la tabla de doble columna
+                    doc.autoTable({
+                        head: [['Descripción', 'Precio', 'Descripción', 'Precio']],
+                        body: tableRows,
+                        startY: startY + 2,
+                        theme: 'striped',
+                        headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold', halign: 'center' },
+                        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
+                        alternateRowStyles: { fillColor: [245, 245, 245] },
+                        columnStyles: {
+                            0: { cellWidth: 65 },
+                            1: { cellWidth: 25, halign: 'right' },
+                            2: { cellWidth: 65 },
+                            3: { cellWidth: 25, halign: 'right' }
+                        },
+                        didDrawPage: (data) => {
+                            // Footer en cada página
+                            doc.setFontSize(8);
+                            doc.setTextColor(150);
+                            const pageCount = doc.internal.getNumberOfPages();
+                            doc.text(`Página ${data.pageNumber} de ${pageCount}`, doc.internal.pageSize.getWidth() - 14, 287, { align: 'right' });
+                        }
+                    });
+
+                    startY = doc.autoTable.previous.finalY + 15;
+                }
+
+                // 5. Guardar el archivo
+                doc.save(`lista-de-precios-${new Date().toISOString().slice(0,10)}.pdf`);
+                setPdfLoading(false);
+            };
         
             const handleLogin = React.useCallback(async (email, password) => {
                 setLoading(true); setError(null);
@@ -2283,6 +2420,7 @@
                         fetchProductos={fetchProductos}
                         onShowRenameModal={setRenamingCategory}
                         onShowManageModal={setManagingCategory}
+                        onShowPdfOptionsModal={() => setIsPdfModalOpen(true)}
                     />
                     {viewingPedidoId && (
                         <PedidoDetailModal
@@ -2340,8 +2478,18 @@
                         />
                     )}
                     {isImportVentasModalOpen && (
-                        <ImportVentasModal 
+                        <<ImportVentasModal 
                             onClose={() => { setIsImportVentasModalOpen(false); forceRerender('dashboard'); }} 
+                        />
+                    )}
+                    {isPdfModalOpen && (
+                        <PdfOptionsModal
+                            onClose={() => setIsPdfModalOpen(false)}
+                            onGenerate={(options) => {
+                                setIsPdfModalOpen(false);
+                                generatePdf(options);
+                            }}
+                            loading={pdfLoading}
                         />
                     )}
                 </React.Fragment>
@@ -2352,6 +2500,7 @@
     </script>
 </body>
 </html>
+
 
 
 
