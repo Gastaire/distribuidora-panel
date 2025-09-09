@@ -2290,14 +2290,18 @@
                 for (const category of sortedCategories) {
                     const productsInCategory = groupedProducts[category];
                     
-                    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
-                    // Solo procederemos si hay productos en esta categoría
-                    if (productsInCategory && productsInCategory.length > 0) {
+                    // --- CORRECCIÓN CLAVE ---
+                    // Si la categoría no tiene productos después del filtrado, la saltamos por completo.
+                    if (!productsInCategory || productsInCategory.length === 0) {
+                        continue;
+                    }
                         // Dividir productos en dos columnas
                         const midPoint = Math.ceil(productsInCategory.length / 2);
                         const leftColumnProducts = productsInCategory.slice(0, midPoint);
                         const rightColumnProducts = productsInCategory.slice(midPoint);
                         
+                        const rightColumnProducts = productsInCategory.slice(midPoint);
+                    
                         const tableRows = [];
                         for (let i = 0; i < midPoint; i++) {
                             const leftProduct = leftColumnProducts[i];
@@ -2309,6 +2313,11 @@
                                 rightProduct ? rightProduct.nombre : '',
                                 rightProduct ? `$${parseFloat(rightProduct.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}` : ''
                             ]);
+                        }
+    
+                        // Si después de todo, no hay filas (podría pasar en un caso extremo), también saltamos.
+                        if (tableRows.length === 0) {
+                            continue;
                         }
 
                         // Título de la categoría
@@ -2504,6 +2513,7 @@
     </script>
 </body>
 </html>
+
 
 
 
