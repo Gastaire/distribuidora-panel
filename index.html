@@ -2352,7 +2352,12 @@
                         }
                     });
 
-                    startY = doc.autoTable.previous.finalY + 15;
+                    // AQUÍ ESTÁ EL CAMBIO - Verificación segura de doc.autoTable.previous
+                    // Si doc.autoTable.previous existe y tiene finalY, usamos ese valor
+                    // De lo contrario, incrementamos startY en un valor fijo para la siguiente sección
+                    startY = (doc.autoTable.previous && typeof doc.autoTable.previous.finalY !== 'undefined') 
+                        ? doc.autoTable.previous.finalY + 15 
+                        : startY + 30; // Avanzamos un poco más si no podemos determinar finalY
                 }
 
                 // 5. Guardar el archivo
@@ -2510,6 +2515,7 @@
     </script>
 </body>
 </html>
+
 
 
 
