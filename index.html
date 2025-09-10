@@ -2255,14 +2255,26 @@
                     return;
                 }
                 
-                const doc = new jsPDF();
+                // Crear documento PDF en formato A4
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Constantes para márgenes y dimensiones
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 10;
+                const contentWidth = pageWidth - (margin * 2);
+                const imageSize = 15; // Tamaño para la miniatura de imagen
                 
                 // 1. Filtrar productos según las opciones
                 let productosFiltrados = [...productos];
                 if (options.stock === 'in-stock') {
                     productosFiltrados = productosFiltrados.filter(p => p.stock === 'Sí');
                 }
-
+            
                 // 2. Agrupar por categoría
                 const groupedProducts = productosFiltrados.reduce((acc, product) => {
                     const category = product.categoria || 'Sin Categoría';
@@ -2270,97 +2282,130 @@
                     acc[category].push(product);
                     return acc;
                 }, {});
-
+            
                 const sortedCategories = Object.keys(groupedProducts).sort();
-
-                // 3. Diseño del PDF
-                // Encabezado general
+            
+                // 3. Diseño del PDF - Encabezado general
+                // Crear un fondo para el encabezado
+                doc.setFillColor(240, 240, 240);
+                doc.rect(0, 0, pageWidth, 35, 'F');
+                
+                // Título principal
                 doc.setFontSize(22);
                 doc.setFont(undefined, 'bold');
-                doc.text("Lista de Precios", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                doc.setTextColor(40, 40, 40);
+                doc.text("Lista de Precios", pageWidth / 2, 15, { align: 'center' });
+                
+                // Subtítulos
                 doc.setFontSize(10);
                 doc.setFont(undefined, 'normal');
-                doc.setTextColor(100);
-                doc.text(`Generado por: ${user.nombre}`, 14, 30);
-                doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, doc.internal.pageSize.getWidth() - 14, 30, { align: 'right' });
-
-                let startY = 40;
-
-                // 4. Iterar y crear tablas por categoría (LÓGICA DE DOBLE COLUMNA)
+                doc.setTextColor(80, 80, 80);
+                doc.text(`Generado por: ${user.nombre}`, margin, 25);
+                doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, pageWidth - margin, 25, { align: 'right' });
+            
+                let yPosition = 40;
+            
+                // 4. Generar contenido por categoría
                 for (const category of sortedCategories) {
                     const productsInCategory = groupedProducts[category];
                     
-                    // Si la categoría no tiene productos después del filtrado, la saltamos por completo.
+                    // Si la categoría no tiene productos después del filtrado, la saltamos
                     if (!productsInCategory || productsInCategory.length === 0) {
                         continue;
                     }
-
-                    // Dividir productos en dos columnas
-                    const midPoint = Math.ceil(productsInCategory.length / 2);
-                    const leftColumnProducts = productsInCategory.slice(0, midPoint);
-                    const rightColumnProducts = productsInCategory.slice(midPoint);
-                    
-                    const tableRows = [];
-                    for (let i = 0; i < midPoint; i++) {
-                        const leftProduct = leftColumnProducts[i];
-                        const rightProduct = rightColumnProducts[i]; // Puede ser undefined si la cantidad es impar
-                        
-                        tableRows.push([
-                            leftProduct.nombre,
-                            `$${parseFloat(leftProduct.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`,
-                            rightProduct ? rightProduct.nombre : '',
-                            rightProduct ? `$${parseFloat(rightProduct.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}` : ''
-                        ]);
-                    }
-
-                    // Si después de todo, no hay filas (podría pasar en un caso extremo), también saltamos.
-                    if (tableRows.length === 0) {
-                        continue;
-                    }
-
-                    // Título de la categoría
-                    doc.setFontSize(14);
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(40);
-                    if (startY + 20 > 280) { 
+            
+                    // Agregar una página nueva si no hay suficiente espacio
+                    if (yPosition > pageHeight - 50) {
                         doc.addPage();
-                        startY = 20;
+                        yPosition = 20;
                     }
-                    doc.text(category, 14, startY);
-
-                    // Dibujar la tabla de doble columna
-                    doc.autoTable({
-                        head: [['Descripción', 'Precio', 'Descripción', 'Precio']],
-                        body: tableRows,
-                        startY: startY + 2,
-                        theme: 'striped',
-                        headStyles: { fillColor: [22, 160, 133], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                        bodyStyles: { fontSize: 8, cellPadding: 1.5 },
-                        alternateRowStyles: { fillColor: [245, 245, 245] },
-                        columnStyles: {
-                            0: { cellWidth: 65 },
-                            1: { cellWidth: 25, halign: 'right' },
-                            2: { cellWidth: 65 },
-                            3: { cellWidth: 25, halign: 'right' }
-                        },
-                        didDrawPage: (data) => {
-                            // Footer en cada página
-                            doc.setFontSize(8);
-                            doc.setTextColor(150);
-                            const pageCount = doc.internal.getNumberOfPages();
-                            doc.text(`Página ${data.pageNumber} de ${pageCount}`, doc.internal.pageSize.getWidth() - 14, 287, { align: 'right' });
+            
+                    // Título de la categoría
+                    doc.setFillColor(22, 160, 133); // Color verde para el fondo
+                    doc.rect(margin, yPosition, contentWidth, 10, 'F');
+                    doc.setFont(undefined, 'bold');
+                    doc.setTextColor(255);
+                    doc.setFontSize(12);
+                    doc.text(category, margin + 5, yPosition + 7);
+                    yPosition += 15;
+            
+                    // Dibujar cada producto
+                    for (const product of productsInCategory) {
+                        // Verificar si hay espacio en la página actual
+                        if (yPosition > pageHeight - 30) {
+                            doc.addPage();
+                            yPosition = 20;
                         }
-                    });
-
-                    // AQUÍ ESTÁ EL CAMBIO - Verificación segura de doc.autoTable.previous
-                    // Si doc.autoTable.previous existe y tiene finalY, usamos ese valor
-                    // De lo contrario, incrementamos startY en un valor fijo para la siguiente sección
-                    startY = (doc.autoTable.previous && typeof doc.autoTable.previous.finalY !== 'undefined') 
-                        ? doc.autoTable.previous.finalY + 15 
-                        : startY + 30; // Avanzamos un poco más si no podemos determinar finalY
+            
+                        // Fondo para cada producto (alterno)
+                        const isEven = productsInCategory.indexOf(product) % 2 === 0;
+                        doc.setFillColor(isEven ? 252 : 248, isEven ? 252 : 248, isEven ? 252 : 248);
+                        doc.rect(margin, yPosition, contentWidth, 20, 'F');
+                        
+                        // Espacio para imagen (marco)
+                        doc.setDrawColor(200, 200, 200);
+                        doc.setLineWidth(0.1);
+                        doc.rect(margin + 2, yPosition + 2, imageSize, imageSize);
+                        
+                        // Si el producto tiene imagen, intentar cargarla
+                        if (product.imagen_url) {
+                            try {
+                                doc.addImage(
+                                    product.imagen_url, 
+                                    'JPEG', 
+                                    margin + 2, 
+                                    yPosition + 2, 
+                                    imageSize, 
+                                    imageSize, 
+                                    '', 
+                                    'FAST'
+                                );
+                            } catch (e) {
+                                // Si falla al cargar la imagen, no hacemos nada (ya tenemos el marco)
+                                console.log(`No se pudo cargar la imagen para: ${product.nombre}`);
+                            }
+                        }
+                        
+                        // Nombre del producto
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(60, 60, 60);
+                        doc.setFontSize(10);
+                        doc.text(product.nombre, margin + imageSize + 5, yPosition + 7);
+                        
+                        // SKU (si existe)
+                        if (product.codigo_sku) {
+                            doc.setFont(undefined, 'normal');
+                            doc.setTextColor(120, 120, 120);
+                            doc.setFontSize(8);
+                            doc.text(`SKU: ${product.codigo_sku}`, margin + imageSize + 5, yPosition + 12);
+                        }
+                        
+                        // Precio (alineado a la derecha)
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(22, 160, 133); // Verde para el precio
+                        doc.setFontSize(12);
+                        const precio = `$${parseFloat(product.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`;
+                        doc.text(precio, pageWidth - margin - 5, yPosition + 10, { align: 'right' });
+                        
+                        // Avanzar para el siguiente producto
+                        yPosition += 22;
+                    }
+                    
+                    // Espacio después de cada categoría
+                    yPosition += 5;
                 }
-
-                // 5. Guardar el archivo
+                
+                // 5. Agregar pie de página con numeración
+                const totalPages = doc.internal.getNumberOfPages();
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+                }
+            
+                // 6. Guardar el archivo
                 doc.save(`lista-de-precios-${new Date().toISOString().slice(0,10)}.pdf`);
                 setPdfLoading(false);
             };
@@ -2515,6 +2560,7 @@
     </script>
 </body>
 </html>
+
 
 
 
