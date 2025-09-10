@@ -955,18 +955,18 @@
 
         const PdfOptionsModal = ({ onClose, onGenerate, loading }) => {
             const [options, setOptions] = React.useState({
-                format: 'price-list',
+                format: 'price-list', // Valores posibles: 'price-list', 'catalog'
                 stock: 'in-stock',
             });
-
+        
             const handleOptionChange = (type, value) => {
                 setOptions(prev => ({ ...prev, [type]: value }));
             };
-
+        
             const handleSubmit = () => {
                 onGenerate(options);
             };
-
+        
             const OptionButton = ({ label, description, value, type, selectedValue, onSelect, disabled = false }) => (
                 <button
                     onClick={() => onSelect(type, value)}
@@ -977,7 +977,7 @@
                     <p className="text-sm text-gray-500">{description}</p>
                 </button>
             );
-
+        
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
@@ -991,7 +991,7 @@
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <OptionButton 
                                         label="Lista de Precios"
-                                        description="Un listado compacto, por categorías y en múltiples columnas. Ideal para imprimir."
+                                        description="Un listado compacto, organizado por categorías. Ideal para imprimir."
                                         value="price-list"
                                         type="format"
                                         selectedValue={options.format}
@@ -999,16 +999,15 @@
                                     />
                                     <OptionButton 
                                         label="Catálogo con Fotos"
-                                        description="Muestra cada producto con su imagen. (Próximamente)"
+                                        description="Muestra los productos en cuadrícula con imágenes destacadas."
                                         value="catalog"
                                         type="format"
                                         selectedValue={options.format}
                                         onSelect={handleOptionChange}
-                                        disabled={true}
                                     />
                                 </div>
                             </div>
-                             <div>
+                            <div>
                                 <h3 className="text-lg font-semibold text-gray-700 mb-2">2. Elige qué productos incluir</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <OptionButton 
@@ -2257,17 +2256,17 @@
                 
                 // Crear documento PDF en formato A4
                 const doc = new jsPDF({
-                    orientation: 'portrait',
+                    orientation: options.format === 'catalog' ? 'landscape' : 'portrait',
                     unit: 'mm',
                     format: 'a4'
                 });
                 
-                // Constantes para márgenes y dimensiones
+                // Constantes para márgenes y dimensiones - REDUCIDOS
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const pageHeight = doc.internal.pageSize.getHeight();
-                const margin = 10;
+                const margin = 3; // Reducido de 10mm a 3mm
                 const contentWidth = pageWidth - (margin * 2);
-                const imageSize = 15; // Tamaño para la miniatura de imagen
+                const imageSize = 12; // Reducido ligeramente para hacer espacio
                 
                 // 1. Filtrar productos según las opciones
                 let productosFiltrados = [...productos];
@@ -2285,114 +2284,235 @@
             
                 const sortedCategories = Object.keys(groupedProducts).sort();
             
-                // 3. Diseño del PDF - Encabezado general
+                // 3. Diseño del PDF - Encabezado general (más compacto)
                 // Crear un fondo para el encabezado
                 doc.setFillColor(240, 240, 240);
-                doc.rect(0, 0, pageWidth, 35, 'F');
+                doc.rect(0, 0, pageWidth, 25, 'F'); // Reducido de 35mm a 25mm
                 
                 // Título principal
-                doc.setFontSize(22);
+                doc.setFontSize(18); // Reducido de 22 a 18
                 doc.setFont(undefined, 'bold');
                 doc.setTextColor(40, 40, 40);
-                doc.text("Lista de Precios", pageWidth / 2, 15, { align: 'center' });
+                doc.text("Lista de Precios", pageWidth / 2, 10, { align: 'center' });
                 
                 // Subtítulos
-                doc.setFontSize(10);
+                doc.setFontSize(8); // Reducido de 10 a 8
                 doc.setFont(undefined, 'normal');
                 doc.setTextColor(80, 80, 80);
-                doc.text(`Generado por: ${user.nombre}`, margin, 25);
-                doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, pageWidth - margin, 25, { align: 'right' });
+                doc.text(`Generado por: ${user.nombre}`, margin, 18);
+                doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, pageWidth - margin, 18, { align: 'right' });
             
-                let yPosition = 40;
+                let yPosition = 30; // Reducido de 40 a 30
             
-                // 4. Generar contenido por categoría
-                for (const category of sortedCategories) {
-                    const productsInCategory = groupedProducts[category];
+                if (options.format === 'catalog') {
+                    // FORMATO CATÁLOGO (CUADRÍCULA)
+                    // Calculamos los parámetros de la cuadrícula
+                    const itemWidth = 60;  // Ancho de cada celda de producto
+                    const itemHeight = 70; // Alto de cada celda de producto
+                    const imgSize = 45;    // Tamaño de la imagen en el catálogo
+                    const cols = Math.floor(contentWidth / itemWidth); // Número de columnas en la cuadrícula
+                    const gapX = (contentWidth - (cols * itemWidth)) / (cols - 1); // Espacio horizontal entre celdas
                     
-                    // Si la categoría no tiene productos después del filtrado, la saltamos
-                    if (!productsInCategory || productsInCategory.length === 0) {
-                        continue;
-                    }
-            
-                    // Agregar una página nueva si no hay suficiente espacio
-                    if (yPosition > pageHeight - 50) {
-                        doc.addPage();
-                        yPosition = 20;
-                    }
-            
-                    // Título de la categoría
-                    doc.setFillColor(22, 160, 133); // Color verde para el fondo
-                    doc.rect(margin, yPosition, contentWidth, 10, 'F');
-                    doc.setFont(undefined, 'bold');
-                    doc.setTextColor(255);
-                    doc.setFontSize(12);
-                    doc.text(category, margin + 5, yPosition + 7);
-                    yPosition += 15;
-            
-                    // Dibujar cada producto
-                    for (const product of productsInCategory) {
-                        // Verificar si hay espacio en la página actual
-                        if (yPosition > pageHeight - 30) {
-                            doc.addPage();
-                            yPosition = 20;
+                    for (const category of sortedCategories) {
+                        const productsInCategory = groupedProducts[category];
+                        
+                        // Si la categoría no tiene productos después del filtrado, la saltamos
+                        if (!productsInCategory || productsInCategory.length === 0) {
+                            continue;
                         }
             
-                        // Fondo para cada producto (alterno)
-                        const isEven = productsInCategory.indexOf(product) % 2 === 0;
-                        doc.setFillColor(isEven ? 252 : 248, isEven ? 252 : 248, isEven ? 252 : 248);
-                        doc.rect(margin, yPosition, contentWidth, 20, 'F');
+                        // Agregar una página nueva si no hay suficiente espacio
+                        if (yPosition > pageHeight - 30) {
+                            doc.addPage();
+                            yPosition = 15;
+                        }
+            
+                        // Título de la categoría
+                        doc.setFillColor(22, 160, 133);
+                        doc.rect(margin, yPosition, contentWidth, 8, 'F');
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(255);
+                        doc.setFontSize(10);
+                        doc.text(category, margin + 3, yPosition + 5.5);
+                        yPosition += 12;
+            
+                        // Dibujar productos en formato cuadrícula
+                        let colIndex = 0;
+                        let rowStartY = yPosition;
                         
-                        // Espacio para imagen (marco)
-                        doc.setDrawColor(200, 200, 200);
-                        doc.setLineWidth(0.1);
-                        doc.rect(margin + 2, yPosition + 2, imageSize, imageSize);
-                        
-                        // Si el producto tiene imagen, intentar cargarla
-                        if (product.imagen_url) {
-                            try {
-                                doc.addImage(
-                                    product.imagen_url, 
-                                    'JPEG', 
-                                    margin + 2, 
-                                    yPosition + 2, 
-                                    imageSize, 
-                                    imageSize, 
-                                    '', 
-                                    'FAST'
-                                );
-                            } catch (e) {
-                                // Si falla al cargar la imagen, no hacemos nada (ya tenemos el marco)
-                                console.log(`No se pudo cargar la imagen para: ${product.nombre}`);
+                        for (let i = 0; i < productsInCategory.length; i++) {
+                            const product = productsInCategory[i];
+                            
+                            // Calcular posición X,Y para la celda actual
+                            const x = margin + (colIndex * (itemWidth + gapX));
+                            const y = rowStartY;
+                            
+                            // Verificar si necesitamos una nueva página
+                            if (y + itemHeight > pageHeight - 10) {
+                                doc.addPage();
+                                rowStartY = 15;
+                                colIndex = 0;
+                                continue; // Volver a procesar este producto en la nueva página
+                            }
+                            
+                            // Dibujar fondo de celda con borde suave
+                            doc.setFillColor(248, 248, 248);
+                            doc.setDrawColor(220, 220, 220);
+                            doc.roundedRect(x, y, itemWidth, itemHeight, 2, 2, 'FD');
+                            
+                            // Agregar imagen (centrada)
+                            const imgX = x + (itemWidth - imgSize) / 2;
+                            const imgY = y + 5;
+                            
+                            // Marco para la imagen
+                            doc.setDrawColor(200, 200, 200);
+                            doc.setFillColor(255, 255, 255);
+                            doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, 'FD');
+                            
+                            if (product.imagen_url) {
+                                try {
+                                    doc.addImage(
+                                        product.imagen_url,
+                                        'JPEG',
+                                        imgX,
+                                        imgY,
+                                        imgSize,
+                                        imgSize,
+                                        '',
+                                        'FAST'
+                                    );
+                                } catch (e) {
+                                    console.log(`No se pudo cargar la imagen para: ${product.nombre}`);
+                                }
+                            }
+                            
+                            // Nombre del producto (centrado)
+                            doc.setFont(undefined, 'bold');
+                            doc.setTextColor(60, 60, 60);
+                            doc.setFontSize(8);
+                            
+                            // Truncar nombre si es muy largo
+                            let nombre = product.nombre;
+                            if (nombre.length > 25) {
+                                nombre = nombre.substring(0, 22) + '...';
+                            }
+                            
+                            doc.text(nombre, x + itemWidth/2, y + imgSize + 15, { align: 'center' });
+                            
+                            // Precio (centrado)
+                            doc.setFont(undefined, 'bold');
+                            doc.setTextColor(22, 160, 133);
+                            doc.setFontSize(10);
+                            const precio = `$${parseFloat(product.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`;
+                            doc.text(precio, x + itemWidth/2, y + imgSize + 25, { align: 'center' });
+                            
+                            // Avanzar a la siguiente columna o fila
+                            colIndex++;
+                            if (colIndex >= cols) {
+                                colIndex = 0;
+                                rowStartY += itemHeight + 5; // 5mm de espacio entre filas
+                                
+                                // Verificar si la siguiente fila cabe en la página
+                                if (rowStartY + itemHeight > pageHeight - 10) {
+                                    doc.addPage();
+                                    rowStartY = 15;
+                                }
                             }
                         }
                         
-                        // Nombre del producto
-                        doc.setFont(undefined, 'bold');
-                        doc.setTextColor(60, 60, 60);
-                        doc.setFontSize(10);
-                        doc.text(product.nombre, margin + imageSize + 5, yPosition + 7);
+                        // Actualizar yPosition para la siguiente categoría
+                        yPosition = rowStartY + itemHeight + 10;
                         
-                        // SKU (si existe)
-                        if (product.codigo_sku) {
-                            doc.setFont(undefined, 'normal');
-                            doc.setTextColor(120, 120, 120);
-                            doc.setFontSize(8);
-                            doc.text(`SKU: ${product.codigo_sku}`, margin + imageSize + 5, yPosition + 12);
+                        // Si no hay espacio para la siguiente categoría, nueva página
+                        if (yPosition > pageHeight - 30) {
+                            doc.addPage();
+                            yPosition = 15;
+                        }
+                    }
+                } else {
+                    // 4. Generar contenido por categoría - FORMATO LISTA OPTIMIZADO
+                    for (const category of sortedCategories) {
+                        const productsInCategory = groupedProducts[category];
+                        
+                        // Si la categoría no tiene productos después del filtrado, la saltamos
+                        if (!productsInCategory || productsInCategory.length === 0) {
+                            continue;
+                        }
+            
+                        // Agregar una página nueva si no hay suficiente espacio
+                        if (yPosition > pageHeight - 30) {
+                            doc.addPage();
+                            yPosition = 15; // Reducido para aprovechar espacio
+                        }
+            
+                        // Título de la categoría (más compacto)
+                        doc.setFillColor(22, 160, 133);
+                        doc.rect(margin, yPosition, contentWidth, 8, 'F'); // Reducido de 10 a 8
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(255);
+                        doc.setFontSize(10); // Reducido de 12 a 10
+                        doc.text(category, margin + 3, yPosition + 5.5);
+                        yPosition += 10; // Reducido de 15 a 10
+            
+                        // Dibujar cada producto - ALTURA REDUCIDA
+                        for (const product of productsInCategory) {
+                            // Verificar si hay espacio en la página actual
+                            if (yPosition > pageHeight - 16) { // Reducido para caber más productos
+                                doc.addPage();
+                                yPosition = 15;
+                            }
+            
+                            // Fondo para cada producto (más compacto)
+                            const isEven = productsInCategory.indexOf(product) % 2 === 0;
+                            doc.setFillColor(isEven ? 252 : 248, isEven ? 252 : 248, isEven ? 252 : 248);
+                            doc.rect(margin, yPosition, contentWidth, 15, 'F'); // Reducido de 20 a 15
+                            
+                            // Espacio para imagen
+                            doc.setDrawColor(200, 200, 200);
+                            doc.setLineWidth(0.1);
+                            doc.rect(margin + 2, yPosition + 1.5, imageSize, imageSize);
+                            
+                            // Si el producto tiene imagen, intentar cargarla
+                            if (product.imagen_url) {
+                                try {
+                                    doc.addImage(
+                                        product.imagen_url, 
+                                        'JPEG', 
+                                        margin + 2, 
+                                        yPosition + 1.5, 
+                                        imageSize, 
+                                        imageSize, 
+                                        '', 
+                                        'FAST'
+                                    );
+                                } catch (e) {
+                                    console.log(`No se pudo cargar la imagen para: ${product.nombre}`);
+                                }
+                            }
+                            
+                            // Nombre del producto - CENTRADO VERTICALMENTE CON LA IMAGEN
+                            doc.setFont(undefined, 'bold');
+                            doc.setTextColor(60, 60, 60);
+                            doc.setFontSize(9); // Reducido de 10 a 9
+                            
+                            // Calcular posición vertical centrada respecto a la imagen
+                            const nombreY = yPosition + 7.5; // Centro de la celda
+                            doc.text(product.nombre, margin + imageSize + 5, nombreY);
+                            
+                            // Precio (alineado a la derecha) - CENTRADO VERTICALMENTE
+                            doc.setFont(undefined, 'bold');
+                            doc.setTextColor(22, 160, 133);
+                            doc.setFontSize(11);
+                            const precio = `$${parseFloat(product.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`;
+                            doc.text(precio, pageWidth - margin - 3, nombreY, { align: 'right' });
+                            
+                            // Avanzar para el siguiente producto
+                            yPosition += 16; // Reducido de 22 a 16
                         }
                         
-                        // Precio (alineado a la derecha)
-                        doc.setFont(undefined, 'bold');
-                        doc.setTextColor(22, 160, 133); // Verde para el precio
-                        doc.setFontSize(12);
-                        const precio = `$${parseFloat(product.precio_unitario).toLocaleString('es-AR', {maximumFractionDigits: 0})}`;
-                        doc.text(precio, pageWidth - margin - 5, yPosition + 10, { align: 'right' });
-                        
-                        // Avanzar para el siguiente producto
-                        yPosition += 22;
+                        // Espacio después de cada categoría
+                        yPosition += 3; // Reducido de 5 a 3
                     }
-                    
-                    // Espacio después de cada categoría
-                    yPosition += 5;
                 }
                 
                 // 5. Agregar pie de página con numeración
@@ -2400,13 +2520,17 @@
                 
                 for (let i = 1; i <= totalPages; i++) {
                     doc.setPage(i);
-                    doc.setFontSize(8);
+                    doc.setFontSize(7); // Reducido de 8 a 7
                     doc.setTextColor(150);
-                    doc.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+                    doc.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 3, { align: 'right' });
                 }
             
-                // 6. Guardar el archivo
-                doc.save(`lista-de-precios-${new Date().toISOString().slice(0,10)}.pdf`);
+                // 6. Guardar el archivo con nombre según formato
+                const fileName = options.format === 'catalog' 
+                    ? `catalogo-productos-${new Date().toISOString().slice(0,10)}.pdf`
+                    : `lista-de-precios-${new Date().toISOString().slice(0,10)}.pdf`;
+                
+                doc.save(fileName);
                 setPdfLoading(false);
             };
         
@@ -2560,6 +2684,7 @@
     </script>
 </body>
 </html>
+
 
 
 
