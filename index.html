@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Panel de Administración</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/3b82f6/white?text=D" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DistriMaxi" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
@@ -441,24 +447,26 @@
                             onClose={() => setConfirmAction({ action: null, pedido: null })} 
                         />
                     )}
-                    <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
-                        <h1 className="text-3xl font-bold text-gray-800">Bandeja de Pedidos</h1>
-                        <div className="flex items-center gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h1 className="text-3xl font-bold text-gray-800 shrink-0">Bandeja de Pedidos</h1>
+                        <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-4">
                             {selectedPedidos.length > 1 && user.rol === 'admin' && (
                                 <button 
                                     onClick={handleCombinePedidos} 
-                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"
+                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center"
                                 >
                                     <PlusIcon className="h-5 w-5 mr-2" /> Combinar ({selectedPedidos.length})
                                 </button>
                             )}
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-gray-600">Archivados</span>
-                                <button onClick={() => setShowArchived(!showArchived)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-200'}`}>
-                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showArchived ? 'translate-x-6' : 'translate-x-1'}`}/>
-                                </button>
+                            <div className="flex items-center justify-between sm:justify-end gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-600">Archivados</span>
+                                    <button onClick={() => setShowArchived(!showArchived)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showArchived ? 'translate-x-6' : 'translate-x-1'}`}/>
+                                    </button>
+                                </div>
+                                <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
                             </div>
-                            <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg"/>
                         </div>
                     </div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -631,7 +639,13 @@
             const isAdmin = user.rol === 'admin';
             return (
                 <div>
-                    <div className="flex justify-between items-center mb-6 gap-4"><h1 className="text-3xl font-bold text-gray-800">Gestión de Clientes</h1><input type="text" placeholder="Buscar por comercio o contacto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>{isAdmin && (<button onClick={() => onShowClienteForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}</div>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Clientes</h1>
+                        <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-4">
+                            <input type="text" placeholder="Buscar por comercio o contacto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-auto sm:flex-grow max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
+                            {isAdmin && (<button onClick={() => onShowClienteForm({})} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center shrink-0"><PlusIcon className="h-5 w-5 mr-2" /> Agregar</button>)}
+                        </div>
+                    </div>
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             {loading && <div className="p-6 flex justify-center"><Spinner className="border-blue-500"/></div>}
@@ -1181,9 +1195,9 @@
                 <React.Fragment>
                     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-                            <div className="flex justify-between items-center p-4 border-b">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b gap-3">
                                 <h2 className="text-xl font-bold text-gray-800">Detalle del Pedido #{pedidoId}</h2>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <button onClick={fetchLogs} className="relative flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-sm"><HistoryIcon className="h-5 w-5"/>Logs{integrityIssues.length > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 border-2 border-white"></span>}</button>
                                     <button onClick={() => handlePrint('printableAreaAssembly')} className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-3 rounded-lg text-sm"><CheckSquareIcon className="h-5 w-5"/>P/ Armar</button>
                                     <button onClick={() => handlePrint('printableArea')} className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-lg text-sm"><PrintIcon className="h-5 w-5"/>Imprimir</button>
@@ -2083,6 +2097,13 @@
 
         const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal, productos, categorias, loadingProductos, errorProductos, fetchProductos, onShowRenameModal, onShowManageModal, onShowPdfOptionsModal }) => {
             const isAdmin = user.rol === 'admin';
+
+            const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+            
+            const handleNavItemClick = (page) => {
+                setCurrentPage(page);
+                setIsSidebarOpen(false); // Cierra el menú al seleccionar una opción
+            };
             
             const renderContent = () => {
                 switch (currentPage) {
@@ -2122,26 +2143,53 @@
             };
 
             return (
+                // --- INICIO DE LA MODIFICACIÓN ---
                 <div className="flex h-screen bg-gray-100 font-sans">
-                    <aside className="w-64 bg-gray-800 text-white flex flex-col shrink-0">
-                        <div className="h-20 flex items-center justify-center border-b border-gray-700"><PackageIcon className="h-8 w-8 mr-2" /><span className="text-xl font-bold">Distribuidora</span></div>
+                    {/* Overlay para cerrar el menú en móvil */}
+                    {isSidebarOpen && (
+                        <div 
+                            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+                            onClick={() => setIsSidebarOpen(false)}
+                        ></div>
+                    )}
+
+                    {/* Barra Lateral Adaptable */}
+                    <aside className={`fixed inset-y-0 left-0 bg-gray-800 text-white flex flex-col shrink-0 w-64 z-30 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="h-20 flex items-center justify-center border-b border-gray-700">
+                            <PackageIcon className="h-8 w-8 mr-2" />
+                            <span className="text-xl font-bold">Distribuidora</span>
+                        </div>
                         <nav className="flex-1 px-4 py-6 space-y-2">
-                            <NavItem icon={<HomeIcon />} text="Dashboard" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} />
-                            {isAdmin && <NavItem icon={<ChartBarIcon />} text="Análisis" active={currentPage === 'analisis'} onClick={() => setCurrentPage('analisis')} />}
-                            <NavItem icon={<ShoppingCartIcon />} text="Pedidos" active={currentPage === 'pedidos'} onClick={() => setCurrentPage('pedidos')} />
-                            <NavItem icon={<PackageIcon />} text="Productos" active={currentPage === 'productos'} onClick={() => setCurrentPage('productos')} />
-                            {isAdmin && <NavItem icon={<TagIcon />} text="Categorías" active={currentPage === 'categorias'} onClick={() => setCurrentPage('categorias')} />}
-                            <NavItem icon={<UsersIcon />} text="Clientes" active={currentPage === 'clientes'} onClick={() => setCurrentPage('clientes')} />
-                            {isAdmin && <NavItem icon={<UsersIcon />} text="Usuarios" active={currentPage === 'usuarios'} onClick={() => setCurrentPage('usuarios')} />}
-                            {isAdmin && <NavItem icon={<ActivityIcon />} text="Actividad" active={currentPage === 'actividad'} onClick={() => setCurrentPage('actividad')} />}
+                            <NavItem icon={<HomeIcon />} text="Dashboard" active={currentPage === 'dashboard'} onClick={() => handleNavItemClick('dashboard')} />
+                            {isAdmin && <NavItem icon={<ChartBarIcon />} text="Análisis" active={currentPage === 'analisis'} onClick={() => handleNavItemClick('analisis')} />}
+                            <NavItem icon={<ShoppingCartIcon />} text="Pedidos" active={currentPage === 'pedidos'} onClick={() => handleNavItemClick('pedidos')} />
+                            <NavItem icon={<PackageIcon />} text="Productos" active={currentPage === 'productos'} onClick={() => handleNavItemClick('productos')} />
+                            {isAdmin && <NavItem icon={<TagIcon />} text="Categorías" active={currentPage === 'categorias'} onClick={() => handleNavItemClick('categorias')} />}
+                            <NavItem icon={<UsersIcon />} text="Clientes" active={currentPage === 'clientes'} onClick={() => handleNavItemClick('clientes')} />
+                            {isAdmin && <NavItem icon={<UsersIcon />} text="Usuarios" active={currentPage === 'usuarios'} onClick={() => handleNavItemClick('usuarios')} />}
+                            {isAdmin && <NavItem icon={<ActivityIcon />} text="Actividad" active={currentPage === 'actividad'} onClick={() => handleNavItemClick('actividad')} />}
                         </nav>
                         <div className="px-4 py-6 border-t border-gray-700">
                             <div className="mb-4"><p className="text-sm font-semibold">{user.nombre}</p><p className="text-xs text-gray-400 capitalize">{user.rol}</p></div>
                             <button onClick={onLogout} className="w-full flex items-center justify-center py-2 px-4 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-semibold"><LogOutIcon className="h-5 w-5 mr-2" />Cerrar Sesión</button>
                         </div>
                     </aside>
-                    <main className="flex-1 p-8 overflow-y-auto">{renderContent()}</main>
+                    
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Barra Superior con Botón de Hamburguesa */}
+                        <header className="md:hidden bg-white shadow-md p-4 flex justify-between items-center">
+                            <button onClick={() => setIsSidebarOpen(true)} className="text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                            </button>
+                            <h1 className="text-lg font-bold text-gray-800 capitalize">{currentPage}</h1>
+                            <div></div> {/* Espaciador */}
+                        </header>
+                        
+                        {/* Contenido Principal */}
+                        <main className="flex-1 p-4 md:p-8 overflow-y-auto">{renderContent()}</main>
+                    </div>
                 </div>
+                // --- FIN DE LA MODIFICACIÓN ---
             );
         };
 
@@ -2764,6 +2812,7 @@
     </script>
 </body>
 </html>
+
 
 
 
