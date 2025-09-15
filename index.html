@@ -531,16 +531,15 @@
         
         const ProductosView = ({ user, onShowProductoForm, onShowImportModal, productos, loading, error, onRefresh, onShowPdfOptionsModal }) => {
             const [searchTerm, setSearchTerm] = React.useState('');
-            // --- INICIO DE LA MODIFICACIÓN ---
             const [showArchived, setShowArchived] = React.useState(false);
 
-            // Cada vez que el interruptor cambie, refrescamos la lista de productos
             React.useEffect(() => {
                 onRefresh(showArchived);
             }, [showArchived]);
 
             const { items: sortedProductos, requestSort, sortConfig } = useSortableData(productos, { key: 'nombre', direction: 'ascending' });
             const [confirmArchive, setConfirmArchive] = React.useState(null);
+            const [confirmRestore, setConfirmRestore] = React.useState(null);
             const [actionLoading, setActionLoading] = React.useState(false);
             
             const handleExportCsv = () => {
@@ -572,7 +571,7 @@
                         throw new Error(errData.message || 'Error al archivar el producto.');
                     }
                     setConfirmArchive(null);
-                    onRefresh(showArchived); // Refrescamos la lista manteniendo el filtro actual
+                    onRefresh(showArchived);
                 } catch (err) { 
                     alert(err.message);
                     setConfirmArchive(null);
@@ -581,6 +580,32 @@
                 }
             };
             
+            // --- INICIO DE LA MODIFICACIÓN: Nueva función para restaurar ---
+            const executeRestore = async () => {
+                if (!confirmRestore) return;
+
+                setActionLoading(true);
+                const token = localStorage.getItem('token');
+                try {
+                    const response = await fetch(`${API_URL}/productos/${confirmRestore.id}/restore`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.message || 'Error al restaurar el producto.');
+                    }
+                    setConfirmRestore(null);
+                    onRefresh(showArchived);
+                } catch (err) {
+                    alert(err.message);
+                    setConfirmRestore(null);
+                } finally {
+                    setActionLoading(false);
+                }
+            };
+            // --- FIN DE LA MODIFICACIÓN ---
+
             const filteredProductos = sortedProductos.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || (p.codigo_sku && p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())));
             const isAdmin = user.rol === 'admin';
 
@@ -595,13 +620,23 @@
                             loading={actionLoading}
                         />
                     )}
+                    {/* --- INICIO DE LA MODIFICACIÓN: Conectar la nueva función al modal --- */}
+                    {confirmRestore && (
+                        <PasswordConfirmModal
+                            title={`¿Restaurar "${confirmRestore.nombre}"?`}
+                            message="El producto volverá a estar disponible para la venta."
+                            onConfirm={executeRestore}
+                            onClose={() => setConfirmRestore(null)}
+                            loading={actionLoading}
+                        />
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Productos</h1>
                         <div className="w-full flex flex-col sm:flex-row items-center gap-4">
                             <input type="text" placeholder="Buscar por nombre o SKU..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-auto sm:flex-grow max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
                             
-                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
                             {isAdmin && (
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm text-gray-600">Archivados</span>
@@ -610,7 +645,6 @@
                                     </button>
                                 </div>
                             )}
-                            {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                             <div className="flex gap-2 flex-wrap justify-start">
                                 {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
@@ -637,7 +671,7 @@
                                     </tr></thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredProductos.map((producto) => (
-                                            <tr key={producto.id} className="hover:bg-gray-50">
+                                            <tr key={producto.id} className={`hover:bg-gray-50 transition-opacity ${producto.archivado ? 'opacity-50 bg-gray-100' : ''}`}>
                                                 <td className="px-6 py-4"><img src={producto.imagen_url || 'https://placehold.co/400x400/e2e8f0/e2e8f0?text=...'} alt={producto.nombre} className="h-12 w-12 rounded-md object-cover" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/400x400/e2e8f0/e2e8f0?text=...'; }} /></td>
                                                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{producto.nombre}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">{producto.categoria || '-'}</td>
@@ -646,7 +680,11 @@
                                                 {isAdmin && (
                                                     <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
                                                         <a href="#" onClick={(e) => { e.preventDefault(); onShowProductoForm(producto); }} className="text-blue-600 hover:text-blue-900">Editar</a>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); setConfirmArchive(producto); }} className="text-red-600 hover:text-red-900">Archivar</a>
+                                                        {producto.archivado ? (
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); setConfirmRestore(producto); }} className="text-green-600 hover:text-green-900">Restaurar</a>
+                                                        ) : (
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); setConfirmArchive(producto); }} className="text-red-600 hover:text-red-900">Archivar</a>
+                                                        )}
                                                     </td>
                                                 )}
                                             </tr>
@@ -2871,6 +2909,7 @@
     </script>
 </body>
 </html>
+
 
 
 
