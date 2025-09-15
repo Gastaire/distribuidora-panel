@@ -532,6 +532,9 @@
         const ProductosView = ({ user, onShowProductoForm, onShowImportModal, productos, loading, error, onRefresh, onShowPdfOptionsModal }) => {
             const [searchTerm, setSearchTerm] = React.useState('');
             const { items: sortedProductos, requestSort, sortConfig } = useSortableData(productos, { key: 'nombre', direction: 'ascending' });
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const [confirmArchive, setConfirmArchive] = React.useState(null); // Para el modal de confirmación
+            const [actionLoading, setActionLoading] = React.useState(false);
             
             const handleExportCsv = () => {
                 const headers = "codigo_sku,nombre,categoria,precio_unitario,stock\n";
@@ -547,14 +550,28 @@
                 document.body.removeChild(link);
             };
 
-            const handleDelete = async (productoId) => {
+            const executeArchive = async () => {
+                if (!confirmArchive) return;
+                
+                setActionLoading(true);
                 const token = localStorage.getItem('token');
-                if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-                    try {
-                        const response = await fetch(`${API_URL}/productos/${productoId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                        if (!response.ok) throw new Error('Error al eliminar el producto.');
-                        onRefresh();
-                    } catch (err) { alert(err.message); }
+                try {
+                    // La ruta sigue siendo DELETE, el backend se encarga de la lógica de archivar
+                    const response = await fetch(`${API_URL}/productos/${confirmArchive.id}`, { 
+                        method: 'DELETE', 
+                        headers: { 'Authorization': `Bearer ${token}` } 
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.message || 'Error al archivar el producto.');
+                    }
+                    setConfirmArchive(null);
+                    onRefresh();
+                } catch (err) { 
+                    alert(err.message);
+                    setConfirmArchive(null); // Cerramos el modal incluso si hay error
+                } finally {
+                    setActionLoading(false);
                 }
             };
             
@@ -563,6 +580,18 @@
 
             return (
                 <div>
+                    {/* Modal de confirmación para archivar */}
+                    {confirmArchive && (
+                        <PasswordConfirmModal
+                            title={`¿Archivar "${confirmArchive.nombre}"?`}
+                            message="El producto se ocultará de las listas de venta y no podrá ser agregado a nuevos pedidos. Podrás restaurarlo más tarde."
+                            onConfirm={executeArchive}
+                            onClose={() => setConfirmArchive(null)}
+                            loading={actionLoading}
+                        />
+                    )}
+                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Productos</h1>
                         <div className="w-full flex flex-col sm:flex-row items-center gap-4">
@@ -598,7 +627,14 @@
                                                 <td className="px-6 py-4 text-sm text-gray-700">{producto.categoria || '-'}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">${producto.precio_unitario}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">{producto.stock}</td>
-                                                {isAdmin && <td className="px-6 py-4 text-right text-sm font-medium space-x-4"><a href="#" onClick={(e) => { e.preventDefault(); onShowProductoForm(producto); }} className="text-blue-600 hover:text-blue-900">Editar</a><a href="#" onClick={(e) => { e.preventDefault(); handleDelete(producto.id); }} className="text-red-600 hover:text-red-900">Eliminar</a></td>}
+                                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                                {isAdmin && (
+                                                    <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); onShowProductoForm(producto); }} className="text-blue-600 hover:text-blue-900">Editar</a>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); setConfirmArchive(producto); }} className="text-red-600 hover:text-red-900">Archivar</a>
+                                                    </td>
+                                                )}
+                                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -610,6 +646,7 @@
                 </div>
             );
         };
+        
         const ClientesView = ({ user, onShowClienteForm }) => {
             const [clientes, setClientes] = React.useState([]);
             const [loading, setLoading] = React.useState(true);
@@ -2812,6 +2849,7 @@
     </script>
 </body>
 </html>
+
 
 
 
