@@ -531,9 +531,16 @@
         
         const ProductosView = ({ user, onShowProductoForm, onShowImportModal, productos, loading, error, onRefresh, onShowPdfOptionsModal }) => {
             const [searchTerm, setSearchTerm] = React.useState('');
-            const { items: sortedProductos, requestSort, sortConfig } = useSortableData(productos, { key: 'nombre', direction: 'ascending' });
             // --- INICIO DE LA MODIFICACIÓN ---
-            const [confirmArchive, setConfirmArchive] = React.useState(null); // Para el modal de confirmación
+            const [showArchived, setShowArchived] = React.useState(false);
+
+            // Cada vez que el interruptor cambie, refrescamos la lista de productos
+            React.useEffect(() => {
+                onRefresh(showArchived);
+            }, [showArchived]);
+
+            const { items: sortedProductos, requestSort, sortConfig } = useSortableData(productos, { key: 'nombre', direction: 'ascending' });
+            const [confirmArchive, setConfirmArchive] = React.useState(null);
             const [actionLoading, setActionLoading] = React.useState(false);
             
             const handleExportCsv = () => {
@@ -556,7 +563,6 @@
                 setActionLoading(true);
                 const token = localStorage.getItem('token');
                 try {
-                    // La ruta sigue siendo DELETE, el backend se encarga de la lógica de archivar
                     const response = await fetch(`${API_URL}/productos/${confirmArchive.id}`, { 
                         method: 'DELETE', 
                         headers: { 'Authorization': `Bearer ${token}` } 
@@ -566,10 +572,10 @@
                         throw new Error(errData.message || 'Error al archivar el producto.');
                     }
                     setConfirmArchive(null);
-                    onRefresh();
+                    onRefresh(showArchived); // Refrescamos la lista manteniendo el filtro actual
                 } catch (err) { 
                     alert(err.message);
-                    setConfirmArchive(null); // Cerramos el modal incluso si hay error
+                    setConfirmArchive(null);
                 } finally {
                     setActionLoading(false);
                 }
@@ -580,7 +586,6 @@
 
             return (
                 <div>
-                    {/* Modal de confirmación para archivar */}
                     {confirmArchive && (
                         <PasswordConfirmModal
                             title={`¿Archivar "${confirmArchive.nombre}"?`}
@@ -590,12 +595,23 @@
                             loading={actionLoading}
                         />
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Productos</h1>
                         <div className="w-full flex flex-col sm:flex-row items-center gap-4">
                             <input type="text" placeholder="Buscar por nombre o SKU..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full sm:w-auto sm:flex-grow max-w-xs px-4 py-2 border border-gray-300 rounded-lg"/>
+                            
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            {isAdmin && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-600">Archivados</span>
+                                    <button onClick={() => setShowArchived(!showArchived)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${showArchived ? 'bg-blue-600' : 'bg-gray-200'}`}>
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showArchived ? 'translate-x-6' : 'translate-x-1'}`}/>
+                                    </button>
+                                </div>
+                            )}
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
+
                             <div className="flex gap-2 flex-wrap justify-start">
                                 {isAdmin && <button onClick={onShowImportModal} className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><UploadIcon className="h-5 w-5 mr-2" /> Importar</button>}
                                 <button onClick={handleExportCsv} className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg flex items-center shrink-0"><DownloadIcon className="h-5 w-5 mr-2" /> Exportar CSV</button>
@@ -627,14 +643,12 @@
                                                 <td className="px-6 py-4 text-sm text-gray-700">{producto.categoria || '-'}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">${producto.precio_unitario}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">{producto.stock}</td>
-                                                {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                                 {isAdmin && (
                                                     <td className="px-6 py-4 text-right text-sm font-medium space-x-4">
                                                         <a href="#" onClick={(e) => { e.preventDefault(); onShowProductoForm(producto); }} className="text-blue-600 hover:text-blue-900">Editar</a>
                                                         <a href="#" onClick={(e) => { e.preventDefault(); setConfirmArchive(producto); }} className="text-red-600 hover:text-red-900">Archivar</a>
                                                     </td>
                                                 )}
-                                                {/* --- FIN DE LA MODIFICACIÓN --- */}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -2258,15 +2272,22 @@
             const [categoryActionLoading, setCategoryActionLoading] = React.useState(false);
             const [categoryActionError, setCategoryActionError] = React.useState(null);
 
-            const fetchProductos = React.useCallback(async () => {
+            // --- INICIO DE LA MODIFICACIÓN ---
+            const fetchProductos = React.useCallback(async (includeArchived = false) => {
                 if (!token) return;
                 
                 setLoadingProductos(true);
                 setErrorProductos(null);
-                // No necesitamos un estado de carga separado para categorías, usamos el de productos.
                 
                 try {
-                    const response = await fetch(`${API_URL}/productos?format=full`, {
+                    // Construimos la URL con el parámetro para incluir archivados si es necesario
+                    const url = new URL(`${API_URL}/productos`);
+                    url.searchParams.append('format', 'full');
+                    if (includeArchived) {
+                        url.searchParams.append('include_archived', 'true');
+                    }
+                    
+                    const response = await fetch(url.toString(), {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     
@@ -2281,6 +2302,7 @@
                     setLoadingProductos(false);
                 }
             }, [token]);
+            // --- FIN DE LA MODIFICACIÓN ---
 
             React.useEffect(() => {
                 if (token) {
@@ -2849,6 +2871,7 @@
     </script>
 </body>
 </html>
+
 
 
 
