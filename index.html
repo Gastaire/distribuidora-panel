@@ -117,6 +117,8 @@
         const FileTextIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>);
         const TagIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>);
         const ChartBarIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10" /><line x1="18" y1="20" x2="18" y2="4" /><line x1="6" y1="20" x2="6" y2="16" /></svg>);        
+        // --- INICIO DE LA MODIFICACIÓN: Nuevo icono y componente ---
+        const ShieldWarningIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>);
         
         const PasswordConfirmModal = ({ title, message, onConfirm, onClose, loading }) => {
             const [password, setPassword] = React.useState('');
@@ -580,7 +582,6 @@
                 }
             };
             
-            // --- INICIO DE LA MODIFICACIÓN: Nueva función para restaurar ---
             const executeRestore = async () => {
                 if (!confirmRestore) return;
 
@@ -604,7 +605,6 @@
                     setActionLoading(false);
                 }
             };
-            // --- FIN DE LA MODIFICACIÓN ---
 
             const filteredProductos = sortedProductos.filter(p => p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || (p.codigo_sku && p.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())));
             const isAdmin = user.rol === 'admin';
@@ -620,7 +620,6 @@
                             loading={actionLoading}
                         />
                     )}
-                    {/* --- INICIO DE LA MODIFICACIÓN: Conectar la nueva función al modal --- */}
                     {confirmRestore && (
                         <PasswordConfirmModal
                             title={`¿Restaurar "${confirmRestore.nombre}"?`}
@@ -630,7 +629,6 @@
                             loading={actionLoading}
                         />
                     )}
-                    {/* --- FIN DE LA MODIFICACIÓN --- */}
 
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h1 className="text-3xl font-bold text-gray-800 shrink-0">Gestión de Productos</h1>
@@ -2184,6 +2182,87 @@
             );
         };
 
+        const DataIntegrityView = ({ onSelectPedido }) => {
+            const [orphanedItems, setOrphanedItems] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+            const [error, setError] = React.useState(null);
+            const token = localStorage.getItem('token');
+
+            React.useEffect(() => {
+                const fetchOrphanedItems = async () => {
+                    setLoading(true);
+                    setError(null);
+                    try {
+                        const response = await fetch(`${API_URL}/diagnostics/orphaned-items`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(errData.message || 'No se pudo obtener el reporte de integridad.');
+                        }
+                        setOrphanedItems(await response.json());
+                    } catch (err) {
+                        setError(err.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                fetchOrphanedItems();
+            }, [token]);
+
+            return (
+                <div>
+                    <div className="mb-6">
+                        <h1 className="text-3xl font-bold text-gray-800">Diagnóstico de Integridad de Datos</h1>
+                        <p className="text-gray-500 mt-2">Este reporte muestra los productos dentro de pedidos que ya no existen en la base de datos principal ("items huérfanos").</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                            {loading ? (
+                                <div className="p-8 flex justify-center items-center gap-3"><Spinner className="border-blue-500"/> <span className="text-gray-600">Analizando integridad...</span></div>
+                            ) : error ? (
+                                <p className="p-6 text-center text-red-500 bg-red-50">{error}</p>
+                            ) : orphanedItems.length === 0 ? (
+                                <div className="p-8 text-center">
+                                    <h3 className="text-xl font-bold text-green-600">¡Todo en orden!</h3>
+                                    <p className="text-gray-600 mt-2">No se encontraron items de pedidos huérfanos. La integridad de los datos de productos es correcta.</p>
+                                </div>
+                            ) : (
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pedido ID</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Pedido</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto Huérfano</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID Producto (Antiguo)</th>
+                                            <th className="relative px-6 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {orphanedItems.map((item, index) => (
+                                            <tr key={index} className="bg-red-50 hover:bg-red-100">
+                                                <td className="px-6 py-4 text-sm font-medium text-gray-900">#{item.pedido_id}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{new Date(item.fecha_creacion).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{item.nombre_comercio}</td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-red-800">{item.nombre_producto}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600 font-mono">{item.producto_id}</td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button onClick={() => onSelectPedido(item.pedido_id)} className="text-blue-600 hover:text-blue-900">Ver Pedido</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const DashboardPage = ({ user, onLogout, currentPage, setCurrentPage, onShowPedido, onShowProductoForm, onShowClienteForm, onShowImportModal, onShowUsuarioForm, onShowImportVentasModal, productos, categorias, loadingProductos, errorProductos, fetchProductos, onShowRenameModal, onShowManageModal, onShowPdfOptionsModal }) => {
             const isAdmin = user.rol === 'admin';
 
@@ -2225,6 +2304,10 @@
                         return <ActividadView />;
                     case 'analisis':
                         return <AnalyticsView allCategories={categorias} />;
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    case 'integridad':
+                        return <DataIntegrityView onSelectPedido={onShowPedido} />;
+                    // --- FIN DE LA MODIFICACIÓN ---
                     case 'dashboard': 
                     default:
                         return <DashboardView onShowImportVentasModal={onShowImportVentasModal} />;
@@ -2232,7 +2315,6 @@
             };
 
             return (
-                // --- INICIO DE LA MODIFICACIÓN ---
                 <div className="flex h-screen bg-gray-100 font-sans">
                     {/* Overlay para cerrar el menú en móvil */}
                     {isSidebarOpen && (
@@ -2257,6 +2339,7 @@
                             <NavItem icon={<UsersIcon />} text="Clientes" active={currentPage === 'clientes'} onClick={() => handleNavItemClick('clientes')} />
                             {isAdmin && <NavItem icon={<UsersIcon />} text="Usuarios" active={currentPage === 'usuarios'} onClick={() => handleNavItemClick('usuarios')} />}
                             {isAdmin && <NavItem icon={<ActivityIcon />} text="Actividad" active={currentPage === 'actividad'} onClick={() => handleNavItemClick('actividad')} />}
+                            {isAdmin && <NavItem icon={<ShieldWarningIcon />} text="Integridad" active={currentPage === 'integridad'} onClick={() => handleNavItemClick('integridad')} />}
                         </nav>
                         <div className="px-4 py-6 border-t border-gray-700">
                             <div className="mb-4"><p className="text-sm font-semibold">{user.nombre}</p><p className="text-xs text-gray-400 capitalize">{user.rol}</p></div>
@@ -2278,7 +2361,6 @@
                         <main className="flex-1 p-4 md:p-8 overflow-y-auto">{renderContent()}</main>
                     </div>
                 </div>
-                // --- FIN DE LA MODIFICACIÓN ---
             );
         };
 
@@ -2909,6 +2991,7 @@
     </script>
 </body>
 </html>
+
 
 
 
